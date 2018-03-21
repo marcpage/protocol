@@ -1,7 +1,7 @@
-#ifndef __HTTPQuery_h__
-#define __HTTPQuery_h__
+#ifndef __HTTPRequest_h__
+#define __HTTPRequest_h__
 
-/** @file HTTPQuery.h
+/** @file HTTPRequest.h
 	@todo document
 */
 
@@ -199,4 +199,4 @@ namespace http {
 
 }
 
-#endif // __HTTPQuery_h__
+#endif // __HTTPRequest_h__

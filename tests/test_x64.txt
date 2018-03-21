@@ -1,5 +1,5 @@
 -test
-HTTPQuery		clang++:103:1.559:2.996	g++:103:1.586:2.960	llvm-g++:103:1.790:3.028
+HTTPRequest		clang++:103:1.813:3.302	g++:103:1.730:3.227	llvm-g++:103:1.790:3.421
 
 -header
-HTTPQuery.h	103
+HTTPRequest.h	103

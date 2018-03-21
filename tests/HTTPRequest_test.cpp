@@ -1,4 +1,4 @@
-#include "protocol/HTTPQuery.h"
+#include "protocol/HTTPRequest.h"
 #include <stdio.h>
 
 #define dotest(condition) \
