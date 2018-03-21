@@ -17,7 +17,12 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			http::Query test1;
 			http::Query test2;
 			http::Query test4("key4", http::Query::IsQuery);
+			http::Query	test5("http://server.com/action.asp?test=1&test=2&time=now&help", http::Query::SearchForQuery);
 
+			dotest(test5.getOne("test") == "1");
+			dotest(test5.getOne("time") == "now");
+			dotest(test5.has("help"));
+			dotest(!test5.hasValue("help"));
 			test1["key1"] = "value1";
 			test2["key2"] = "value2";
 			dotest(std::string(test1) == "?key1=value1");
