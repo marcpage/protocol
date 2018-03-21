@@ -7,7 +7,7 @@
 	}
 
 int main(int /*argc*/, char * /*argv*/[]) {
-	int	iterations= 15000;
+	int	iterations= 13000;
 #ifdef __Tracer_h__
 	iterations= 1;
 #endif
@@ -89,7 +89,8 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			request.path() = "/index.html";
 			request.protocol() = "HTTPS";
 			request.version() = "1.2";
-			dotest(std::string(request) == "PUT /index.html HTTPS/1.2");
+			request.query()["key"] = "value";
+			dotest(std::string(request) == "PUT /index.html?key=value HTTPS/1.2");
 			
 		} catch(const std::exception &exception) {
 			fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
