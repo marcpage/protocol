@@ -6,6 +6,8 @@
 */
 
 #include <string>
+#include <vector>
+#include <map>
 #include <ctype.h>
 
 namespace http {
@@ -17,7 +19,7 @@ namespace http {
 				IsQuery
 			};
 			typedef std::string String;
-			typedef std::vecotr<String> StringList;
+			typedef std::vector<String> StringList;
 			static String &unescape(const String &value, String &result);
 			static String unescape(const String &value);
 			static String &escape(const String &value, String &result);
@@ -37,19 +39,20 @@ namespace http {
 			bool empty() const;
 		private:
 			typedef std::map<String, StringList> _KeyValues;
+			_KeyValues _keyValues;
 	};
 
-	inline String &Query::unescape(const String &value, String &result) {
-		const String const hex = "0123456789ABCDEF";
+	inline Query::String &Query::unescape(const String &value, String &result) {
+		const String hex = "0123456789ABCDEF";
 
 		result.clear();
 		result.reserve(value.length());
 		for (String::size_type i = 0; i < value.length(); ++i) {
 			if ( ('%' == value[i]) && (i + 2 < value.length()) ) {
-				String::size_type upperNibble = hex.find(value[i + 1]);
-				String::size_type lowerNibble = hex.find(value[i + 2]);
+				String::size_type upperNibble = hex.find(::toupper(value[i + 1]));
+				String::size_type lowerNibble = hex.find(::toupper(value[i + 2]));
 
-				result.append(1, upperNibble << 4 + lowerNibble);
+				result.append(1, (upperNibble << 4) + lowerNibble);
 				i+= 2;
 			} else if ('+' == value[i]) {
 				result.append(1, ' ');
@@ -59,7 +62,7 @@ namespace http {
 		}
 		return result;
 	}
-	inline String Query::unescape(const String &value) {
+	inline Query::String Query::unescape(const String &value) {
 		String result;
 
 		return unescape(value, result);
@@ -67,8 +70,8 @@ namespace http {
 	/**
 		@todo Test characters above 127
 	*/
-	inline String &Query::escape(const String &value, String &result) {
-		const String const hex = "0123456789ABCDEF";
+	inline Query::String &Query::escape(const String &value, String &result) {
+		const String hex = "0123456789ABCDEF";
 
 		result.clear();
 		result.reserve(value.length());
@@ -85,28 +88,26 @@ namespace http {
 		}
 		return result;
 	}
-	inline String Query::escape(const String &value) {
+	inline Query::String Query::escape(const String &value) {
 		String result;
 
 		return escape(value, result);
 	}
-	inline Query::Query(const String &query, SearchMode mode):_KeyValues() {
+	inline Query::Query(const String &query, SearchMode mode):_keyValues() {
 	}
 	inline Query::Query(const Query &other):_keyValues() {
 	}
 	inline Query &Query::operator=(const Query &other) {
 	}
-	inline const String &Query::operator[](const String &name) const {
+	inline const Query::String &Query::operator[](const String &name) const {
 	}
-	inline String &Query::operator[](const String &name) {
+	inline Query::String &Query::operator[](const String &name) {
 	}
 	inline bool Query::has(const String &name) const {
 	}
 	inline Query::operator String() const {
 	}
-	inline String &Query::getOne(const String &name, String &value) const {
-	}
-	inline String Query::getOne(const String &name) const {
+	inline const Query::String Query::getOne(const String &name) const {
 	}
 	inline void Query::remove(const String &name) {
 	}
