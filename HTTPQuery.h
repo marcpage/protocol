@@ -6,6 +6,7 @@
 */
 
 #include <string>
+#include <ctype.h>
 
 namespace http {
 
@@ -39,15 +40,50 @@ namespace http {
 	};
 
 	inline String &Query::unescape(const String &value, String &result) {
-		result.clear();
+		const String const hex = "0123456789ABCDEF";
 
+		result.clear();
+		result.reserve(value.length());
+		for (String::size_type i = 0; i < value.length(); ++i) {
+			if ( ('%' == value[i]) && (i + 2 < value.length()) ) {
+				String::size_type upperNibble = hex.find(value[i + 1]);
+				String::size_type lowerNibble = hex.find(value[i + 2]);
+
+				result.append(1, upperNibble << 4 + lowerNibble);
+				i+= 2;
+			} else if ('+' == value[i]) {
+				result.append(1, ' ');
+			} else {
+				result.append(1, value[i]);
+			}
+		}
+		return result;
 	}
 	inline String Query::unescape(const String &value) {
 		String result;
 
 		return unescape(value, result);
 	}
+	/**
+		@todo Test characters above 127
+	*/
 	inline String &Query::escape(const String &value, String &result) {
+		const String const hex = "0123456789ABCDEF";
+
+		result.clear();
+		result.reserve(value.length());
+		for (String::size_type i = 0; i < value.length(); ++i) {
+			if (' ' == value[i]) {
+				result.append(1, '+');
+			} else if (isalnum(value[i])) {
+				result.append(1, '%');
+				result.append(1, hex[value[i] >> 4]);
+				result.append(1, hex[value[i] & 0x0F]);
+			} else {
+				result.append(1, value[i]);
+			}
+		}
+		return result;
 	}
 	inline String Query::escape(const String &value) {
 		String result;
