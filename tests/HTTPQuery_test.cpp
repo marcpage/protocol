@@ -20,6 +20,9 @@ int main(int /*argc*/, char * /*argv*/[]) {
 		dotest(http::Query::unescape("Test%0") == "Test%0");
 		dotest(http::Query::unescape("Test%F") == "Test%F");
 		dotest(http::Query::unescape("Test%20") == "Test ");
+		dotest(http::Query::unescape("Test%3d") == "Test=");
+		dotest(http::Query::unescape("Test%3D") == "Test=");
+		dotest(http::Query::unescape("Test%3Z") == "Test%3Z");
 	}
 	return 0;
 }

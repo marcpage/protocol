@@ -52,8 +52,12 @@ namespace http {
 				String::size_type upperNibble = hex.find(::toupper(value[i + 1]));
 				String::size_type lowerNibble = hex.find(::toupper(value[i + 2]));
 
-				result.append(1, (upperNibble << 4) + lowerNibble);
-				i+= 2;
+				if ( (upperNibble != String::npos) && (lowerNibble != String::npos) ) {
+					result.append(1, (upperNibble << 4) + lowerNibble);
+					i+= 2;
+				} else {
+					result.append(1, value[i]);
+				}
 			} else if ('+' == value[i]) {
 				result.append(1, ' ');
 			} else {
