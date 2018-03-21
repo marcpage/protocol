@@ -71,9 +71,6 @@ namespace http {
 
 		return unescape(value, result);
 	}
-	/**
-		@todo Test characters above 127
-	*/
 	inline Query::String &Query::escape(const String &value, String &result) {
 		const String hex = "0123456789ABCDEF";
 
@@ -83,11 +80,11 @@ namespace http {
 			if (' ' == value[i]) {
 				result.append(1, '+');
 			} else if (isalnum(value[i])) {
-				result.append(1, '%');
-				result.append(1, hex[value[i] >> 4]);
-				result.append(1, hex[value[i] & 0x0F]);
-			} else {
 				result.append(1, value[i]);
+			} else {
+				result.append(1, '%');
+				result.append(1, hex[reinterpret_cast<const unsigned char&>(value[i]) >> 4]);
+				result.append(1, hex[value[i] & 0x0F]);
 			}
 		}
 		return result;

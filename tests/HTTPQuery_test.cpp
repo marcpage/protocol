@@ -23,6 +23,8 @@ int main(int /*argc*/, char * /*argv*/[]) {
 		dotest(http::Query::unescape("Test%3d") == "Test=");
 		dotest(http::Query::unescape("Test%3D") == "Test=");
 		dotest(http::Query::unescape("Test%3Z") == "Test%3Z");
+		//printf("FAILED: %s\n", http::Query::escape(http::Query::unescape("%FF")).c_str());
+		dotest(http::Query::escape(http::Query::unescape("%FF")) == "%FF")
 	}
 	return 0;
 }
