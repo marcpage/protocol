@@ -41,7 +41,37 @@ namespace http {
 			typedef std::map<String, StringList> _KeyValues;
 			_KeyValues _keyValues;
 	};
-
+	
+	class RequestLine {
+		public:
+			typedef std::string String;
+			RequestLine();
+			RequestLine(const String &line);
+			RequestLine(const String &line, String::size_type &after);
+			RequestLine(const RequestLine &other);
+			~RequestLine() {}
+			RequestLine &operator=(const RequestLine &other);
+			operator String() const;
+			const String &method() const;
+			const String &path() const;
+			const String &protocol() const;
+			const String &version() const;
+			const Query &query() const;
+			String &method();
+			String &path();
+			String &protocol();
+			String &version();
+			Query &query();
+		private:
+			String	_method;
+			String	_path;
+			String	_protocol;
+			String	_version;
+			Query	_query;
+			String::size_type _find(bool whitespace, const String &text, String::size_type start, String::size_type end);
+			String::size_type _init(const String &line);
+	};
+	
 	inline Query::String &Query::unescape(const String &value, String &result) {
 		const String hex = "0123456789ABCDEF";
 
@@ -197,6 +227,102 @@ namespace http {
 		return _keyValues.empty();
 	}
 
+	inline RequestLine::RequestLine():_method("GET"), _path("/"), _protocol("HTTP"), _version("1.1"), _query() {}
+	inline RequestLine::RequestLine(const String &line):_method(), _path(), _protocol(), _version("1.1"), _query() {
+		_init(line);
+	}
+	inline RequestLine::RequestLine(const String &line, String::size_type &after):_method(), _path(), _protocol(), _version("1.1"), _query() {
+		after = _init(line);
+	}
+	inline RequestLine::RequestLine(const RequestLine &other) {
+		*this= other;
+	}
+	inline RequestLine &RequestLine::operator=(const RequestLine &other) {
+		_method = other._method;
+		_path = other._path;
+		_protocol = other._protocol;
+		_version = other._version;
+		_query = other._query;
+		return *this;
+	}
+	inline RequestLine::operator String() const {
+		return _method + " " + _path + std::string(_query) + " " + _protocol + "/" + _version;
+	}
+	inline const RequestLine::String &RequestLine::method() const {
+		return _method;
+	}
+	inline const RequestLine::String &RequestLine::path() const {
+		return _path;
+	}
+	inline const RequestLine::String &RequestLine::protocol() const {
+		return _protocol;
+	}
+	inline const RequestLine::String &RequestLine::version() const {
+		return _version;
+	}
+	inline const Query &RequestLine::query() const {
+		return _query;
+	}
+	inline RequestLine::String &RequestLine::method() {
+		return _method;
+	}
+	inline RequestLine::String &RequestLine::path() {
+		return _path;
+	}
+	inline RequestLine::String &RequestLine::protocol() {
+		return _protocol;
+	}
+	inline RequestLine::String &RequestLine::version() {
+		return _version;
+	}
+	inline Query &RequestLine::query() {
+		return _query;
+	}
+	inline RequestLine::String::size_type RequestLine::_find(bool whitespace, const String &text, String::size_type start, String::size_type end) {
+		while ( ((isspace(text[start]) ? true : false) != whitespace) && (start < end) ) {
+			++start;
+		}
+		return start;
+	}
+	inline RequestLine::String::size_type RequestLine::_init(const String &line) {
+		String::size_type	start = 0;
+		String::size_type	end;
+		String				protocol;
+		String::size_type	queryPos;
+		String::size_type	slashPos;
+		String::size_type	lineEnd = line.find('\r');
+		String::size_type	after;
+		
+		if (String::npos == lineEnd) {
+			lineEnd = line.find('\n');
+		}
+		after = lineEnd + 1;
+		if (String::npos == lineEnd) {
+			lineEnd = line.length();
+			after = lineEnd;
+		}
+		end = _find(true, line, start, lineEnd);
+		_method = line.substr(start, end - start);
+		start = _find(false, line, end, lineEnd);
+		end = _find(true, line, start, lineEnd);
+		queryPos = line.find('?', start);
+		if ( (queryPos == String::npos) || (queryPos > end) ) {
+			_path = line.substr(start, end - start);
+		} else {
+			_path = line.substr(start, queryPos - start);
+			_query = Query(line.substr(queryPos + 1, end - queryPos - 1), Query::IsQuery);
+		}
+		start = _find(false, line, end, lineEnd);
+		end = _find(true, line, start, lineEnd);
+		slashPos = line.find('/', start);
+		if ( (slashPos == String::npos) || (slashPos > end) ) {
+			_protocol = line.substr(start, end - start);
+		} else {
+			_protocol = line.substr(start, slashPos - start);
+			_version = line.substr(slashPos + 1, end - slashPos - 1);
+		}
+		return after;
+	}
 }
 
 #endif // __HTTPRequest_h__
