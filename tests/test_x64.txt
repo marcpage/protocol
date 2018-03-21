@@ -2,4 +2,4 @@
 HTTPQuery		clang++:47:0:0	g++:47:0:0	llvm-g++:47:0:0
 
 -header
-HTTPQuery.h	69
+HTTPQuery.h	103

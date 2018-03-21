@@ -15,16 +15,14 @@ namespace http {
 
 	class Query {
 		public:
-			enum SearchMode {
-				SearchForQuery,
-				IsQuery
-			};
+			enum SearchMode {SearchForQuery,IsQuery};
 			typedef std::string String;
 			typedef std::vector<String> StringList;
 			static String &unescape(const String &value, String &result);
 			static String unescape(const String &value);
 			static String &escape(const String &value, String &result);
 			static String escape(const String &value);
+			Query();
 			Query(const String &query, SearchMode mode);
 			Query(const Query &other);
 			~Query() {}
@@ -117,10 +115,12 @@ namespace http {
 			position = positionEnd + 1;
 		}
 	}
+	inline Query::Query():_keyValues() {}
 	inline Query::Query(const Query &other):_keyValues() {
 		*this= other;
 	}
 	inline Query &Query::operator=(const Query &other) {
+		_keyValues.clear();
 		if (this != &other) {
 			for (_KeyValues::const_iterator key = other._keyValues.begin(); key != other._keyValues.end(); ++key) {
 				for (StringList::const_iterator value = key->second.begin(); value != key->second.end(); ++value) {
@@ -144,7 +144,7 @@ namespace http {
 	inline bool Query::hasValue(const String &name) const {
 		_KeyValues::const_iterator found= _keyValues.find(name);
 
-		return (found != _keyValues.end()) && (found->second.size() > 0);
+		return (found != _keyValues.end()) && (found->second.size() > 0) && (found->second[0].length() > 0);
 	}
 	inline bool Query::has(const String &name) const {
 		_KeyValues::const_iterator found= _keyValues.find(name);
@@ -155,8 +155,17 @@ namespace http {
 		String	prefix = "";
 
 		for (_KeyValues::const_iterator key = _keyValues.begin(); key != _keyValues.end(); ++key) {
-			for (StringList::const_iterator value = key->second.begin(); value != key->second.end(); ++value) {
-				result += prefix + escape(key->first) + "=" + escape(*value);
+			if (key->second.size() > 0) {
+				for (StringList::const_iterator value = key->second.begin(); value != key->second.end(); ++value) {
+					result += prefix + escape(key->first);
+					if (value->length() > 0) {
+						result += "=" + escape(*value);
+					} else {
+					}
+					prefix = "&";
+				}
+			} else {
+				result += prefix + escape(key->first);
 				prefix = "&";
 			}
 		}
