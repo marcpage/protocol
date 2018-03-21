@@ -7,7 +7,7 @@
 	}
 
 int main(int /*argc*/, char * /*argv*/[]) {
-	int	iterations= 35000;
+	int	iterations= 20000;
 #ifdef __Tracer_h__
 	iterations= 1;
 #endif
@@ -17,7 +17,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			http::Query test1;
 			http::Query test2;
 			http::Query test4("key4", http::Query::IsQuery);
-			http::Query	test5("http://server.com/action.asp?test=1&test=2&time=now&help", http::Query::SearchForQuery);
+			http::Query	test5("http://server.com/action.asp?test=1&test=2&time=now&help#NoStoppingUs", http::Query::SearchForQuery);
 
 			dotest(test5.getOne("test") == "1");
 			dotest(test5.getOne("time") == "now");
@@ -68,6 +68,12 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			dotest(std::string(http::Query("test?key=value", http::Query::SearchForQuery)) == "?key=value");
 			dotest(std::string(http::Query("key", http::Query::IsQuery)) == "?key");
 			dotest(std::string(http::Query("key", http::Query::SearchForQuery)) == "?key");
+			dotest(std::string(http::Query("key=value#hammerTime", http::Query::IsQuery)) == "?key=value");
+			dotest(std::string(http::Query("key=value#hammerTime", http::Query::SearchForQuery)) == "?key=value");
+			dotest(std::string(http::Query("test?key=value#hammerTime", http::Query::IsQuery)) == "?test%3Fkey=value");
+			dotest(std::string(http::Query("test?key=value#hammerTime", http::Query::SearchForQuery)) == "?key=value");
+			dotest(std::string(http::Query("key#hammerTime", http::Query::IsQuery)) == "?key");
+			dotest(std::string(http::Query("key#hammerTime", http::Query::SearchForQuery)) == "?key");
 		} catch(const std::exception &exception) {
 			fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
 		}
