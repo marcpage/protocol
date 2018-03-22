@@ -92,6 +92,19 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			request.query()["key"] = "value";
 			dotest(std::string(request) == "PUT /index.html?key=value HTTPS/1.2");
 
+			const char * const fullRequestRaw= "PUT /index.html?key=value HTTPS/1.2\r\n"
+												"Agent: Protocol\r\n"
+												"\r\n";
+			http::Request	fullRequest(fullRequestRaw);
+			http::Request	requestCopy(fullRequest);
+
+			printf("-=- raw -=-\n%s\n-=- processed -=-\n%s\n", fullRequestRaw, std::string(fullRequest).c_str());
+			dotest(std::string(fullRequest) == fullRequestRaw);
+			fullRequest.request().method()= "GET";
+			fullRequest.fields()["Agent"]= "Testing";
+			dotest(std::string(fullRequest) != fullRequestRaw);
+			fullRequest= requestCopy;
+			dotest(std::string(fullRequest) == fullRequestRaw);
 		} catch(const std::exception &exception) {
 			fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
 		}

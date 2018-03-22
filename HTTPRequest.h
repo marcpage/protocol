@@ -42,7 +42,7 @@ namespace http {
 			typedef std::map<String, StringList> _KeyValues;
 			_KeyValues _keyValues;
 	};
-	
+
 	class RequestLine {
 		public:
 			typedef std::string String;
@@ -72,23 +72,26 @@ namespace http {
 			String::size_type _find(bool whitespace, const String &text, String::size_type start, String::size_type end);
 			String::size_type _init(const String &line);
 	};
-	
+
 	class Request {
 		public:
 			typedef std::string String;
 			Request();
 			Request(const String &headers);
-			Request(const String &headers, String::size_type after);
+			Request(const String &headers, String::size_type &after);
 			Request(const Request &other);
 			~Request() {}
 			Request &operator=(const Request &other);
 			operator String() const;
+			const RequestLine &request() const;
+			RequestLine &request();
+			const Headers &fields() const;
+			Headers &fields();
 		private:
-			typedef std::map<String, String> _Headers;
 			RequestLine	_request;
-			_Headers	_headers;
+			Headers		_headers;
 	};
-	
+
 	inline Query::String &Query::unescape(const String &value, String &result) {
 		const String hex = "0123456789ABCDEF";
 
@@ -309,7 +312,7 @@ namespace http {
 		String::size_type	slashPos;
 		String::size_type	lineEnd = line.find('\r');
 		String::size_type	after;
-		
+
 		if (String::npos == lineEnd) {
 			lineEnd = line.find('\n');
 		}
@@ -340,6 +343,41 @@ namespace http {
 		}
 		return after;
 	}
+
+	inline Request::Request():_request(), _headers() {}
+	inline Request::Request(const String &headers):_request(), _headers() {
+		String::size_type	offset= 0;
+		_request= RequestLine(headers, offset);
+		printf("FAIL: offset=%lu\n", offset);
+		_headers= Headers(headers.substr(offset));
+	}
+	inline Request::Request(const String &headers, String::size_type &after):_request(), _headers() {
+		_request= RequestLine(headers, after);
+		printf("FAIL: offset=%lu\n", after);
+		_headers= Headers(headers.substr(after), after);
+	}
+	inline Request::Request(const Request &other):_request(other._request), _headers(other._headers) {}
+	inline Request &Request::operator=(const Request &other) {
+		_request= other._request;
+		_headers= other._headers;
+		return *this;
+	}
+	inline Request::operator String() const {
+		return String(_request) + "\r\n" + String(_headers);
+	}
+	inline const RequestLine &Request::request() const {
+		return _request;
+	}
+	inline RequestLine &Request::request() {
+		return _request;
+	}
+	inline const Headers &Request::fields() const {
+		return _headers;
+	}
+	inline Headers &Request::fields() {
+		return _headers;
+	}
+
 }
 
 #endif // __HTTPRequest_h__
