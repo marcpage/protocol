@@ -15,6 +15,7 @@ namespace http {
 	class Headers {
 		public:
 			typedef std::string String;
+			Headers();
 			Headers(const String &text);
 			Headers(const String &text, String::size_type &offset);
 			Headers(const Headers &other);
@@ -43,13 +44,14 @@ namespace http {
 			String::size_type _init(const String &text);
 	};
 
-	inline Headers::Headers(const String &text) {
+	inline Headers::Headers():_headers() {}
+	inline Headers::Headers(const String &text):_headers() {
 		_init(text);
 	}
-	inline Headers::Headers(const String &text, String::size_type &offset) {
+	inline Headers::Headers(const String &text, String::size_type &offset):_headers() {
 		offset = _init(text);
 	}
-	inline Headers::Headers(const Headers &other) {
+	inline Headers::Headers(const Headers &other):_headers() {
 		*this= other;
 	}
 	inline Headers &Headers::operator=(const Headers &other) {
@@ -61,7 +63,7 @@ namespace http {
 	}
 	inline Headers::operator String() const {
 		String	results("");
-		
+
 		for (_Headers::const_iterator i= _headers.begin(); i != _headers.end(); ++i) {
 			results+= i->first + ": " + i->second + "\r\n";
 		}
@@ -69,7 +71,7 @@ namespace http {
 	}
 	inline const Headers::String &Headers::operator[](const String &name) const {
 		_Headers::const_iterator found= _headers.find(name);
-		
+
 		if (found == _headers.end()) {
 			throw std::out_of_range(name);
 		}
@@ -83,7 +85,7 @@ namespace http {
 	}
 	inline bool Headers::has(const String &name) const {
 		_Headers::const_iterator found= _headers.find(name);
-		
+
 		return (found != _headers.end());
 	}
 	inline bool Headers::empty() const {
@@ -93,21 +95,24 @@ namespace http {
 		_Range	line;
 		String	lastKey;
 		String	value;
-		
+		String	prefix;
+
 		do {
 			line.nextLine(text);
 			if (::isspace(text[line.start])) {
+				prefix = " ";
 			} else {
 				line.consumeKey(text).trimmed(text).value(text, lastKey);
+				prefix.clear();
 			}
-			_headers[lastKey]+= line.trimmed(text).value(text, value);
-		} while(!line.empty());
+			_headers[lastKey]+= prefix + line.trimmed(text).value(text, value);
+		} while(!line.trimmed(text).empty());
 		return line.end;
 	}
 	inline void Headers::_Range::nextLine(const String &text) {
 		String::size_type cr= text.find('\r', end);
 		String::size_type lf= text.find('\n', end);
-		
+
 		start = end;
 		if ( (cr != String::npos) && (lf != String::npos) ) {
 			end = ( ((cr + 1 == lf) || (lf < cr)) ? lf : cr) + 1;
@@ -120,17 +125,17 @@ namespace http {
 	inline Headers::_Range Headers::_Range::consumeKey(const String &text) {
 		String::size_type colonPos = text.find(':', start);
 		String::size_type keyStart = start;
-		
+
 		start= colonPos + 1;
 		return _Range(keyStart, colonPos);
 	}
 	inline Headers::_Range Headers::_Range::trimmed(const String &text) const {
 		_Range range(start, end);
-		
+
 		while ( (range.start < range.end) && ::isspace(text[range.start]) ) {
 			++range.start;
 		}
-		while ( (range.start < range.end) && ::isspace(text[range.end]) ) {
+		while ( (range.start < range.end) && ::isspace(text[range.end - 1]) ) {
 			--range.end;
 		}
 		return range;
