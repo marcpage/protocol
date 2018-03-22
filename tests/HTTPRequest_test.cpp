@@ -7,7 +7,7 @@
 	}
 
 int main(int /*argc*/, char * /*argv*/[]) {
-	int	iterations= 13000;
+	int	iterations= 15000;
 #ifdef __Tracer_h__
 	iterations= 1;
 #endif
@@ -75,23 +75,23 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			dotest(std::string(http::Query("test?key=value#hammerTime", http::Query::SearchForQuery)) == "?key=value");
 			dotest(std::string(http::Query("key#hammerTime", http::Query::IsQuery)) == "?key");
 			dotest(std::string(http::Query("key#hammerTime", http::Query::SearchForQuery)) == "?key");
-			
+
 			dotest(http::RequestLine("GET /docs/index.html HTTP/1.1").method() == "GET");
 			dotest(http::RequestLine("GET /docs/index.html HTTP/1.1").path() == "/docs/index.html");
 			dotest(http::RequestLine("GET /docs/index.html HTTPS/1.1").protocol() == "HTTPS");
 			dotest(http::RequestLine("GET /docs/index.html HTTP/1.1").version() == "1.1");
 			dotest(http::RequestLine("GET /docs/index.html?key=value HTTP/1.1").query().getOne("key") == "value");
 			dotest(http::RequestLine("GET /docs/index.html HTTPS").protocol() == "HTTPS");
-			
+
 			http::RequestLine	request;
-			
+
 			request.method() = "PUT";
 			request.path() = "/index.html";
 			request.protocol() = "HTTPS";
 			request.version() = "1.2";
 			request.query()["key"] = "value";
 			dotest(std::string(request) == "PUT /index.html?key=value HTTPS/1.2");
-			
+
 		} catch(const std::exception &exception) {
 			fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
 		}
