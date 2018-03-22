@@ -10,6 +10,7 @@
 #include <map>
 #include <ctype.h>
 #include <stdexcept>
+#include "protocol/HTTPHeaders.h"
 
 namespace http {
 
@@ -70,6 +71,22 @@ namespace http {
 			Query	_query;
 			String::size_type _find(bool whitespace, const String &text, String::size_type start, String::size_type end);
 			String::size_type _init(const String &line);
+	};
+	
+	class Request {
+		public:
+			typedef std::string String;
+			Request();
+			Request(const String &headers);
+			Request(const String &headers, String::size_type after);
+			Request(const Request &other);
+			~Request() {}
+			Request &operator=(const Request &other);
+			operator String() const;
+		private:
+			typedef std::map<String, String> _Headers;
+			RequestLine	_request;
+			_Headers	_headers;
 	};
 	
 	inline Query::String &Query::unescape(const String &value, String &result) {
@@ -279,7 +296,7 @@ namespace http {
 		return _query;
 	}
 	inline RequestLine::String::size_type RequestLine::_find(bool whitespace, const String &text, String::size_type start, String::size_type end) {
-		while ( ((isspace(text[start]) ? true : false) != whitespace) && (start < end) ) {
+		while ( ((::isspace(text[start]) ? true : false) != whitespace) && (start < end) ) {
 			++start;
 		}
 		return start;
