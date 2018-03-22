@@ -341,7 +341,7 @@ namespace http {
 			_protocol = line.substr(start, slashPos - start);
 			_version = line.substr(slashPos + 1, end - slashPos - 1);
 		}
-		return after;
+		return after + 1;
 	}
 
 	inline Request::Request():_request(), _headers() {}
