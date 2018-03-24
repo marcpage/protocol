@@ -105,6 +105,14 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			dotest(std::string(fullRequest) != fullRequestRaw);
 			fullRequest= requestCopy;
 			dotest(std::string(fullRequest) == fullRequestRaw);
+
+			try {
+				request.query().getOne("zathura");
+				fprintf(stderr, "FAILED: We should have thrown\n");
+			} catch(const std::out_of_range &) {
+			} catch(const std::exception &exception) {
+				fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
+			}
 		} catch(const std::exception &exception) {
 			fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
 		}

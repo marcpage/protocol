@@ -148,6 +148,8 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			h3 = h2;
 			dotest(h3.has("Cookie"));
 
+			fprintf(stderr, "expected\n--------\n%s\n---------\nproduced\n---------\n%s\n--------\n", "Accept: None\r\n\r\n", std::string(http::Headers("Accept: None\r\n\r\n")).c_str());
+			dotest(std::string(http::Headers("Accept: None\r\n\r\n")) == "Accept: None\r\n\r\n");
 		} catch(const std::exception &exception) {
 			fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
 		}

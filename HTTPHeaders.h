@@ -105,7 +105,9 @@ namespace http {
 				line.consumeKey(text).trimmed(text).value(text, lastKey);
 				prefix.clear();
 			}
-			_headers[lastKey]+= prefix + line.trimmed(text).value(text, value);
+			if (!line.trimmed(text).empty()) {
+				_headers[lastKey]+= prefix + line.trimmed(text).value(text, value);
+			}
 		} while(!line.trimmed(text).empty());
 		return line.end;
 	}

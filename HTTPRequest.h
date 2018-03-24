@@ -348,12 +348,10 @@ namespace http {
 	inline Request::Request(const String &headers):_request(), _headers() {
 		String::size_type	offset= 0;
 		_request= RequestLine(headers, offset);
-		printf("FAIL: offset=%lu\n", offset);
 		_headers= Headers(headers.substr(offset));
 	}
 	inline Request::Request(const String &headers, String::size_type &after):_request(), _headers() {
 		_request= RequestLine(headers, after);
-		printf("FAIL: offset=%lu\n", after);
 		_headers= Headers(headers.substr(after), after);
 	}
 	inline Request::Request(const Request &other):_request(other._request), _headers(other._headers) {}
