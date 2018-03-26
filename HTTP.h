@@ -1,7 +1,7 @@
-#ifndef __HTTPRequest_h__
-#define __HTTPRequest_h__
+#ifndef __HTTP_h__
+#define __HTTP_h__
 
-/** @file HTTPRequest.h
+/** @file HTTP.h
 	@todo document
 */
 
@@ -10,9 +10,40 @@
 #include <map>
 #include <ctype.h>
 #include <stdexcept>
-#include "protocol/HTTPHeaders.h"
 
 namespace http {
+
+	class Headers {
+		public:
+			typedef std::string String;
+			Headers();
+			Headers(const String &text);
+			Headers(const String &text, String::size_type &offset);
+			Headers(const Headers &other);
+			~Headers() {}
+			Headers &operator=(const Headers &other);
+			operator String() const;
+			const String &operator[](const String &name) const;
+			String &operator[](const String &name);
+			void remove(const String &name);
+			bool has(const String &name) const;
+			bool empty() const;
+		private:
+			typedef std::map<String, String> _Headers;
+			struct _Range {
+				String::size_type start;
+				String::size_type end;
+				_Range():start(0), end(0) {}
+				_Range(String::size_type s, String::size_type e):start(s), end(e) {}
+				bool empty() {return start == end;}
+				String &value(const String &text, String &result) {result.assign(text, start, end - start);return result;}
+				void nextLine(const String &text);
+				_Range consumeKey(const String &text);
+				_Range trimmed(const String &text) const;
+			};
+			_Headers	_headers;
+			String::size_type _init(const String &text);
+	};
 
 	class Query {
 		public:
@@ -73,24 +104,155 @@ namespace http {
 			String::size_type _init(const String &line);
 	};
 
-	class Request {
+	class ResponseLine {
 		public:
 			typedef std::string String;
-			Request();
-			Request(const String &headers);
-			Request(const String &headers, String::size_type &after);
-			Request(const Request &other);
-			~Request() {}
-			Request &operator=(const Request &other);
+			ResponseLine();
+			ResponseLine(const ResponseLine &other);
+			ResponseLine(const String &line);
+			ResponseLine(const String &line, String::size_type &after);
+			~ResponseLine() {}
+			ResponseLine &operator=(const ResponseLine &other);
 			operator String() const;
-			const RequestLine &request() const;
-			RequestLine &request();
+			const String &protocol() const;
+			const String &version() const;
+			const String &code() const;
+			const String &message() const;
+			String &protocol();
+			String &version();
+			String &code();
+			String &message();
+		private:
+			String	_protocol;
+			String	_version;
+			String	_code;
+			String	_message;
+			String::size_type _find(bool whitespace, const String &text, String::size_type start, String::size_type end);
+			String::size_type _init(const String &line);
+	};
+
+	template<typename HeaderLine>
+	class Message {
+		public:
+			typedef std::string String;
+			Message();
+			Message(const String &headers);
+			Message(const String &headers, String::size_type &after);
+			Message(const Message &other);
+			~Message() {}
+			Message &operator=(const Message &other);
+			operator String() const;
+			const HeaderLine &info() const;
+			HeaderLine &info();
 			const Headers &fields() const;
 			Headers &fields();
 		private:
-			RequestLine	_request;
+			HeaderLine	_message;
 			Headers		_headers;
 	};
+
+	/* Headers */
+
+	inline Headers::Headers():_headers() {}
+	inline Headers::Headers(const String &text):_headers() {
+		_init(text);
+	}
+	inline Headers::Headers(const String &text, String::size_type &offset):_headers() {
+		offset = _init(text);
+	}
+	inline Headers::Headers(const Headers &other):_headers() {
+		*this= other;
+	}
+	inline Headers &Headers::operator=(const Headers &other) {
+		_headers.clear();
+		for (_Headers::const_iterator i= other._headers.begin(); i != other._headers.end(); ++i) {
+			_headers[i->first] = i->second;
+		}
+		return *this;
+	}
+	inline Headers::operator String() const {
+		String	results("");
+
+		for (_Headers::const_iterator i= _headers.begin(); i != _headers.end(); ++i) {
+			results+= i->first + ": " + i->second + "\r\n";
+		}
+		return results + "\r\n";
+	}
+	inline const Headers::String &Headers::operator[](const String &name) const {
+		_Headers::const_iterator found= _headers.find(name);
+
+		if (found == _headers.end()) {
+			throw std::out_of_range(name);
+		}
+		return found->second;
+	}
+	inline Headers::String &Headers::operator[](const String &name) {
+		return _headers[name];
+	}
+	inline void Headers::remove(const String &name) {
+		_headers.erase(name);
+	}
+	inline bool Headers::has(const String &name) const {
+		_Headers::const_iterator found= _headers.find(name);
+
+		return (found != _headers.end());
+	}
+	inline bool Headers::empty() const {
+		return _headers.empty();
+	}
+	inline Headers::String::size_type Headers::_init(const String &text) {
+		_Range	line;
+		String	lastKey;
+		String	value;
+		String	prefix;
+
+		do {
+			line.nextLine(text);
+			if (::isspace(text[line.start])) {
+				prefix = " ";
+			} else {
+				line.consumeKey(text).trimmed(text).value(text, lastKey);
+				prefix.clear();
+			}
+			if (!line.trimmed(text).empty()) {
+				_headers[lastKey]+= prefix + line.trimmed(text).value(text, value);
+			}
+		} while(!line.trimmed(text).empty());
+		return line.end;
+	}
+	inline void Headers::_Range::nextLine(const String &text) {
+		String::size_type cr= text.find('\r', end);
+		String::size_type lf= text.find('\n', end);
+
+		start = end;
+		if ( (cr != String::npos) && (lf != String::npos) ) {
+			end = ( ((cr + 1 == lf) || (lf < cr)) ? lf : cr) + 1;
+		} else if ( (cr != String::npos) || (lf != String::npos) ) {
+			end = ( lf != String::npos ? lf : cr) + 1;
+		} else {
+			end = text.length();
+		}
+	}
+	inline Headers::_Range Headers::_Range::consumeKey(const String &text) {
+		String::size_type colonPos = text.find(':', start);
+		String::size_type keyStart = start;
+
+		start= colonPos + 1;
+		return _Range(keyStart, colonPos);
+	}
+	inline Headers::_Range Headers::_Range::trimmed(const String &text) const {
+		_Range range(start, end);
+
+		while ( (range.start < range.end) && ::isspace(text[range.start]) ) {
+			++range.start;
+		}
+		while ( (range.start < range.end) && ::isspace(text[range.end - 1]) ) {
+			--range.end;
+		}
+		return range;
+	}
+
+	/* Query */
 
 	inline Query::String &Query::unescape(const String &value, String &result) {
 		const String hex = "0123456789ABCDEF";
@@ -247,6 +409,8 @@ namespace http {
 		return _keyValues.empty();
 	}
 
+	/* RequestLine */
+
 	inline RequestLine::RequestLine():_method("GET"), _path("/"), _protocol("HTTP"), _version("1.1"), _query() {}
 	inline RequestLine::RequestLine(const String &line):_method(), _path(), _protocol(), _version("1.1"), _query() {
 		_init(line);
@@ -344,38 +508,138 @@ namespace http {
 		return after + 1;
 	}
 
-	inline Request::Request():_request(), _headers() {}
-	inline Request::Request(const String &headers):_request(), _headers() {
+	/* ResponseLine */
+
+	inline ResponseLine::ResponseLine():_protocol("HTTP"), _version("1.0"), _code("404"), _message("File Not Found") {}
+	inline ResponseLine::ResponseLine(const ResponseLine &other):_protocol(other._protocol), _version(other._version), _code(other._code), _message(other._message) {}
+	inline ResponseLine::ResponseLine(const String &line) {
+		_init(line);
+	}
+	inline ResponseLine::ResponseLine(const String &line, String::size_type &after) {
+		after= _init(line);
+	}
+	inline ResponseLine &ResponseLine::operator=(const ResponseLine &other) {
+		_code= other._code;
+		_message= other._message;
+		_protocol= other._protocol;
+		_version= other._version;
+		return *this;
+	}
+	inline ResponseLine::operator String() const {
+		return _protocol + "/" + _version + " " + _code + " " + _message;
+	}
+	inline const ResponseLine::String &ResponseLine::protocol() const {
+		return _protocol;
+	}
+	inline const ResponseLine::String &ResponseLine::version() const {
+		return _version;
+	}
+	inline const ResponseLine::String &ResponseLine::code() const {
+		return _code;
+	}
+	inline const ResponseLine::String &ResponseLine::message() const {
+		return _message;
+	}
+	inline ResponseLine::String &ResponseLine::protocol() {
+		return _protocol;
+	}
+	inline ResponseLine::String &ResponseLine::version() {
+		return _version;
+	}
+	inline ResponseLine::String &ResponseLine::code() {
+		return _code;
+	}
+	inline ResponseLine::String &ResponseLine::message() {
+		return _message;
+	}
+	inline ResponseLine::String::size_type ResponseLine::_find(bool whitespace, const String &text, String::size_type start, String::size_type end) {
+		while ( ((::isspace(text[start]) ? true : false) != whitespace) && (start < end) ) {
+			++start;
+		}
+		return start;
+	}
+	inline ResponseLine::String::size_type ResponseLine::_init(const String &line) {
+		String::size_type	start = 0;
+		String::size_type	end;
+		String				protocol;
+		String::size_type	lineEnd = line.find('\r');
+		String::size_type	after;
+
+		if (String::npos == lineEnd) {
+			lineEnd = line.find('\n');
+		}
+		after = lineEnd + ( ((line[lineEnd] == '\r') && (lineEnd + 1 < line.length()) && (line[lineEnd + 1] == '\n')) ? 2 : 1 );
+		if (String::npos == lineEnd) {
+			lineEnd = line.length();
+			after = lineEnd;
+		}
+		end = _find(true, line, start, lineEnd);
+		if (String::npos != end) {
+			String::size_type	slashPos= line.find('/');
+
+			if (String::npos == slashPos) {
+				_protocol= line.substr(start, end - start);
+				_version= "1.0";
+			} else {
+				_protocol= line.substr(start, slashPos - start);
+				_version= line.substr(slashPos + 1, end - slashPos - 1);
+			}
+		}
+		start = _find(false, line, end, lineEnd);
+		end = _find(true, line, start, lineEnd);
+		_code= line.substr(start, end - start);
+		start= _find(false, line, end, lineEnd);
+		_message= line.substr(start, lineEnd - start);
+		return after;
+	}
+
+	/* Message */
+
+	template<typename HeaderLine>
+	inline Message<HeaderLine>::Message():_message(), _headers() {}
+	template<typename HeaderLine>
+	inline Message<HeaderLine>::Message(const String &headers):_message(), _headers() {
 		String::size_type	offset= 0;
-		_request= RequestLine(headers, offset);
+		_message= HeaderLine(headers, offset);
 		_headers= Headers(headers.substr(offset));
 	}
-	inline Request::Request(const String &headers, String::size_type &after):_request(), _headers() {
-		_request= RequestLine(headers, after);
+	template<typename HeaderLine>
+	inline Message<HeaderLine>::Message(const String &headers, String::size_type &after):_message(), _headers() {
+		_message= HeaderLine(headers, after);
 		_headers= Headers(headers.substr(after), after);
 	}
-	inline Request::Request(const Request &other):_request(other._request), _headers(other._headers) {}
-	inline Request &Request::operator=(const Request &other) {
-		_request= other._request;
+	template<typename HeaderLine>
+	inline Message<HeaderLine>::Message(const Message<HeaderLine> &other):_message(other._message), _headers(other._headers) {}
+	template<typename HeaderLine>
+	inline Message<HeaderLine> &Message<HeaderLine>::operator=(const Message<HeaderLine> &other) {
+		_message= other._message;
 		_headers= other._headers;
 		return *this;
 	}
-	inline Request::operator String() const {
-		return String(_request) + "\r\n" + String(_headers);
+	template<typename HeaderLine>
+	inline Message<HeaderLine>::operator String() const {
+		return String(_message) + "\r\n" + String(_headers);
 	}
-	inline const RequestLine &Request::request() const {
-		return _request;
+	template<typename HeaderLine>
+	inline const HeaderLine &Message<HeaderLine>::info() const {
+		return _message;
 	}
-	inline RequestLine &Request::request() {
-		return _request;
+	template<typename HeaderLine>
+	inline HeaderLine &Message<HeaderLine>::info() {
+		return _message;
 	}
-	inline const Headers &Request::fields() const {
+	template<typename HeaderLine>
+	inline const Headers &Message<HeaderLine>::fields() const {
 		return _headers;
 	}
-	inline Headers &Request::fields() {
+	template<typename HeaderLine>
+	inline Headers &Message<HeaderLine>::fields() {
 		return _headers;
 	}
+
+	typedef Message<RequestLine> Request;
+	typedef Message<ResponseLine> Response;
 
 }
 
-#endif // __HTTPRequest_h__
+#endif // __HTTP_h__
