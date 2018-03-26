@@ -316,7 +316,7 @@ namespace http {
 		if (String::npos == lineEnd) {
 			lineEnd = line.find('\n');
 		}
-		after = lineEnd + 1;
+		after = lineEnd + ( ((line[lineEnd] == '\r') && (lineEnd + 1 < line.length()) && (line[lineEnd + 1] == '\n')) ? 2 : 1 );
 		if (String::npos == lineEnd) {
 			lineEnd = line.length();
 			after = lineEnd;
