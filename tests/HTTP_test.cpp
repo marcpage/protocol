@@ -1,7 +1,10 @@
 #include "protocol/HTTP.h"
 #include "os/Thread.h"
 #include "os/BufferAddress.h"
+#include "os/BufferString.h"
 #include "os/SocketServer.h"
+#include "os/AddressIPv4.h"
+#include "os/AddressIPv6.h"
 #include <stdio.h>
 
 #define dotest(condition) \
@@ -296,7 +299,8 @@ class Server : public exec::Thread {
 				_serverAddress(port),
 				_server(_serverAddress.family()),
 				_exiting(false) {
-			printf("Listening at http://localhost:%d\n", port);
+			printf("Listening at http://localhost:%d/\n", port);
+			printf("To quit, go to http://localhost:%d/quit\n", port);
 			_server.reuseAddress();
 			_server.reusePort();
 			_server.bind(_serverAddress);
@@ -322,7 +326,26 @@ class Server : public exec::Thread {
 					_server.accept(connectedTo, *connection);
 					printf("THREAD: %p: Connection received\n", exec::ThreadId::current().thread());
 					buffer.clear();
+					do {
+						line= _readline(connection);
+						buffer+= line;
+					} while ( (line != "\r\n") && (line != "\r") && (line != "\n") );
+
+					http::Request 	request(buffer);
+					http::Response	response;
+
+					response.info().code()= "200";
+					response.info().message()= "OK";
 					
+					buffer= response;
+					connection->write(BufferString(buffer), buffer.size());
+					buffer= request;
+					connection->write(BufferString(buffer), buffer.size());
+					connection->close();
+					delete connection;
+					if (request.info().path() == "/quit") {
+						shutdown();
+					}
 				}
 			} catch(const std::exception &exception) {
 				if(_exiting) {
@@ -341,10 +364,9 @@ class Server : public exec::Thread {
 		net::AddressIPv4	_serverAddress;
 		net::SocketServer	_server;
 		bool				_exiting;
-		ServerThreads		_threads;
 		Server(const Server&); ///< Prevent Usage
 		Server &operator=(const Server&); ///< Prevent Usage
-		std::string readline(net::Socket *connection) {
+		std::string _readline(net::Socket *connection) {
 			char			byte= '\0';
 			BufferAddress	buffer(&byte, 1);
 			std::string		line = "";
@@ -357,7 +379,7 @@ class Server : public exec::Thread {
 		}
 };
 
-int main(int argc, char * argv[]) {
+int main(int argc, char * /*argv*/[]) {
 	int	iterations= 3500;
 #ifdef __Tracer_h__
 	iterations= 1;
