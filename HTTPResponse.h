@@ -36,21 +36,24 @@ namespace http {
 			String	_version;
 			String	_code;
 			String	_message;
-			String::size_type _find(bool whitespace, const STring &text, String::size_type start, String::size_type end);
-			STring::size_type _init(const String &line);
+			String::size_type _find(bool whitespace, const String &text, String::size_type start, String::size_type end);
+			String::size_type _init(const String &line);
 	};
 
-	inline ResponseLine::ResponseLine():_code("404"), _message("File Not Found"), _protocol("HTTP"), _version("1.0") {}
-	inline ResponseLine::ResponseLine(const ResponseLine &other):_code(other._code), _message(other._message), _protocol(other._protocol), _version(other._version) {}
+	inline ResponseLine::ResponseLine():_protocol("HTTP"), _version("1.0"), _code("404"), _message("File Not Found") {}
+	inline ResponseLine::ResponseLine(const ResponseLine &other):_protocol(other._protocol), _version(other._version), _code(other._code), _message(other._message) {}
 	inline ResponseLine::ResponseLine(const String &line) {
+		_init(line);
 	}
 	inline ResponseLine &ResponseLine::operator=(const ResponseLine &other) {
 		_code= other._code;
 		_message= other._message;
 		_protocol= other._protocol;
 		_version= other._version;
+		return *this;
 	}
 	inline ResponseLine::operator String() const {
+		return _protocol + "/" + _version + " " + _code + " " + _message;
 	}
 	inline const ResponseLine::String &ResponseLine::protocol() const {
 		return _protocol;
@@ -86,8 +89,6 @@ namespace http {
 		String::size_type	start = 0;
 		String::size_type	end;
 		String				protocol;
-		String::size_type	queryPos;
-		String::size_type	slashPos;
 		String::size_type	lineEnd = line.find('\r');
 		String::size_type	after;
 
@@ -104,11 +105,11 @@ namespace http {
 			String::size_type	slashPos= line.find('/');
 
 			if (String::npos == slashPos) {
-				_protocol= text.substr(start, end - start);
+				_protocol= line.substr(start, end - start);
 				_version= "1.0";
 			} else {
-				_protocol= text.substr(start, slashPos - start);
-				_version= text.substr(slashPos + 1, slashPos + 1 - end);
+				_protocol= line.substr(start, slashPos - start);
+				_version= line.substr(slashPos + 1, end - slashPos - 1);
 			}
 		}
 		start = _find(false, line, end, lineEnd);

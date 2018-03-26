@@ -1,7 +1,9 @@
 -test
-HTTPHeaders		clang++:65:2.105:3.601	g++:65:1.834:3.245	llvm-g++:65:1.943:3.112
-HTTPRequest		clang++:173:2.021:4.056	g++:173:1.980:3.737	llvm-g++:173:1.936:3.559
+HTTPResponse	clang++:33:1.135:1.911	g++:33:1.838:2.901	llvm-g++:33:1.323:2.181
+HTTPHeaders		clang++:65:2.105:3.601	g++:65:2.610:3.849	llvm-g++:65:2.077:3.317
+HTTPRequest		clang++:173:2.300:4.103	g++:173:2.428:4.237	llvm-g++:173:2.454:4.169
 
 -header
 HTTPRequest.h	173
-HTTPHeaders.h	65
+HTTPHeaders.h	 65
+HTTPResponse.h	 33
