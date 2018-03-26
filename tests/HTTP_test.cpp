@@ -1,4 +1,7 @@
 #include "protocol/HTTP.h"
+#include "os/Thread.h"
+#include "os/BufferAddress.h"
+#include "os/SocketServer.h"
 #include <stdio.h>
 
 #define dotest(condition) \
@@ -286,12 +289,84 @@ void testResponse() {
 	dotest(std::string(fullResponse) == fullResponseRaw);
 }
 
-int main(int /*argc*/, char * /*argv*/[]) {
+class Server : public exec::Thread {
+	public:
+		Server(int port)
+				:exec::Thread(KeepAroundAfterFinish),
+				_serverAddress(port),
+				_server(_serverAddress.family()),
+				_exiting(false) {
+			printf("Listening at http://localhost:%d\n", port);
+			_server.reuseAddress();
+			_server.reusePort();
+			_server.bind(_serverAddress);
+			_server.listen(1);
+			start();
+		}
+		virtual ~Server() {}
+		void shutdown() {
+			_exiting= true;
+			_server.close();
+			join();
+		}
+	protected:
+		virtual void *run() {
+			std::string	line, buffer;
+			
+			try	{
+				while(!_exiting) {
+					net::AddressIPv6	connectedTo;
+					net::Socket			*connection= new net::Socket();
+
+					printf("THREAD: %p: Waiting for connection\n", exec::ThreadId::current().thread());
+					_server.accept(connectedTo, *connection);
+					printf("THREAD: %p: Connection received\n", exec::ThreadId::current().thread());
+					buffer.clear();
+					
+				}
+			} catch(const std::exception &exception) {
+				if(_exiting) {
+					printf("THREAD: %p: EXPECTED: Server Thread: %s\n", exec::ThreadId::current().thread(), exception.what());
+				} else {
+					printf("THREAD: %p: FAILED: Server Thread Exception: %s\n", exec::ThreadId::current().thread(), exception.what());
+				}
+			}
+			return NULL;
+		}
+		virtual void *handle(const std::exception &exception, void *result) {
+			printf("THREAD: %p: FAIL: Exception: %s\n", exec::ThreadId::current().thread(), exception.what());
+			return result;
+		}
+	private:
+		net::AddressIPv4	_serverAddress;
+		net::SocketServer	_server;
+		bool				_exiting;
+		ServerThreads		_threads;
+		Server(const Server&); ///< Prevent Usage
+		Server &operator=(const Server&); ///< Prevent Usage
+		std::string readline(net::Socket *connection) {
+			char			byte= '\0';
+			BufferAddress	buffer(&byte, 1);
+			std::string		line = "";
+			
+			while (byte != '\n') {
+				connection->read(buffer, 1);
+				line += byte;
+			}
+			return line;
+		}
+};
+
+int main(int argc, char * argv[]) {
 	int	iterations= 3500;
 #ifdef __Tracer_h__
 	iterations= 1;
 #endif
-
+	if (argc == 2) {
+		Server	server(8123);
+		
+		server.join();
+	}
 	for(int i= 0; i < iterations; ++i) {
 		try {
 			testHeaders();
