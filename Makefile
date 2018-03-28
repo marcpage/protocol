@@ -12,9 +12,9 @@ docs:documentation/index.html
 test:bin/test
 	@bin/test $(OS_OPTIONS)
 
-os/tests/test.cpp os/*.h:
-	@-git clone http://github.com/marcpage/os
+../os/tests/test.cpp ../os/*.h:
+	@-git clone http://github.com/marcpage/os ../os
 
-bin/test:os/tests/test.cpp os/*.h *.h
+bin/test:../os/tests/test.cpp ../os/*.h *.h
 	@mkdir -p bin
-	@clang++ os/tests/test.cpp -o $@ -I. -lsqlite3 -Wall -Weffc++ -Wextra -Wshadow -Wwrite-strings
+	@clang++ ../os/tests/test.cpp -o $@ -I.. -lsqlite3 -Wall -Weffc++ -Wextra -Wshadow -Wwrite-strings
