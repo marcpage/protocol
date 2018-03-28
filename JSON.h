@@ -344,7 +344,7 @@ namespace json {
 	}
 	inline void Value::_parseNumber(const std::string &text, std::string::size_type &offset) {
 		std::string 					integerChars("-+0123456789");
-		std::string						realChars("e.");
+		std::string						realChars("Ee.");
 		bool							hasRealChar= false;
 		const std::string::size_type	start= offset;
 		size_t	after= 0;
