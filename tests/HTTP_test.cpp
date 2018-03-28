@@ -316,7 +316,7 @@ class Server : public exec::Thread {
 	protected:
 		virtual void *run() {
 			std::string	line, buffer;
-			
+
 			try	{
 				while(!_exiting) {
 					net::AddressIPv6	connectedTo;
@@ -336,7 +336,7 @@ class Server : public exec::Thread {
 
 					response.info().code()= "200";
 					response.info().message()= "OK";
-					
+
 					buffer= response;
 					connection->write(BufferString(buffer), buffer.size());
 					buffer= request;
@@ -346,6 +346,7 @@ class Server : public exec::Thread {
 					if (request.info().path() == "/quit") {
 						shutdown();
 					}
+					printf("THREAD %p: Request\n%s\nTHREAD %p: Response\n%s\n", exec::ThreadId::current().thread(), std::string(request).c_str(), exec::ThreadId::current().thread(), std::string(response).c_str());
 				}
 			} catch(const std::exception &exception) {
 				if(_exiting) {
@@ -370,7 +371,7 @@ class Server : public exec::Thread {
 			char			byte= '\0';
 			BufferAddress	buffer(&byte, 1);
 			std::string		line = "";
-			
+
 			while (byte != '\n') {
 				connection->read(buffer, 1);
 				line += byte;
@@ -386,7 +387,7 @@ int main(int argc, char * /*argv*/[]) {
 #endif
 	if (argc == 2) {
 		Server	server(8123);
-		
+
 		server.join();
 	}
 	for(int i= 0; i < iterations; ++i) {
