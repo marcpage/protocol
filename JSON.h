@@ -3,11 +3,15 @@
 
 /** @file JSON.h
 	@todo document
+	@todo test utf8 and error cases
 */
 
 #include <string>
 #include <vector>
 #include <map>
+#include <sstream>
+#include <iomanip>
+#include <stdexcept>
 #include "os/Exception.h"
 
 namespace json {
@@ -196,6 +200,8 @@ namespace json {
 			void _parseString(const std::string &text, std::string::size_type &offset);
 			void _parseWord(const std::string &text, const std::string &expected, std::string::size_type &offset);
 			void _parseNumber(const std::string &text, std::string::size_type &offset);
+			static size_t _codepoint(const std::string &text, std::string::size_type &offset);
+			static std::string _utf8(size_t codepoint);
 	};
 
 	inline std::string::size_type Value::_skipWhitespace(const std::string &text, std::string::size_type start) {
@@ -312,9 +318,7 @@ namespace json {
 								throw WrongType(std::string("Illegal hex: ") + text.substr(offset + 1, 4), __FILE__, __LINE__);
 							}
 							offset+= 4;
-							// TODO: convert to utf8
-							result+= (char)(value>>8);
-							result+= (char)(value&0xFFL);
+							result+= _utf8(value);
 							break;
 						default:
 							throw WrongType(std::string("Illegal escape: ") + text[offset], __FILE__, __LINE__);
@@ -368,6 +372,55 @@ namespace json {
 		if (after != offset - start) {
 			throw WrongType(std::string("Illegal Number: ") + text.substr(start, offset - start), __FILE__, __LINE__);
 		}
+	}
+	inline size_t Value::_codepoint(const std::string &text, std::string::size_type &offset) {
+		const bool oneByte= (offset < text.length()) && ((0x80 & text[offset]) == 0);
+		const bool twoBytes= (offset + 1 < text.length()) && ((0xE0 & text[offset]) == 0xC0);
+		const bool threeBytes= (offset + 2 < text.length()) && ((0xF0 & text[offset]) == 0xE0);
+		const bool fourBytes= (offset + 3 < text.length()) && ((0xF8 & text[offset]) == 0xF0);
+
+		if (oneByte) {
+			offset+= 1;
+			return text[offset - 1];
+		}
+		if (twoBytes) {
+			offset+= 2;
+			return 0x80 + ((size_t(text[offset - 2] & 0x1F) << 6) | size_t(text[offset - 1] & 0x3F));
+		}
+		if (threeBytes) {
+			offset+= 3;
+			return 0x800 + ((size_t(text[offset - 3] & 0x0F) << 12) | (size_t(text[offset - 2] & 0x3F) << 6) | size_t(text[offset - 1] & 0x3F));
+		}
+		if (fourBytes) {
+			offset+= 4;
+			return 0x10000 + ((size_t(text[offset - 3] & 0x07) << 18) | (size_t(text[offset - 2] & 0x3F) << 12) | (size_t(text[offset - 2] & 0x3F) << 6) | size_t(text[offset - 1] & 0x3F));
+		}
+		throw std::invalid_argument("invalid codepoint: " + text.substr(offset, 4));
+	}
+	inline std::string Value::_utf8(size_t codepoint) {
+		std::string value;
+
+		if (codepoint <= 0x7F) {
+			value.assign(1, char(codepoint));
+		} else if (codepoint <= 0x7FF) {
+			codepoint-= 0x80;
+			value.assign(1, char( (6 << 5) | (codepoint >> 6) ) );
+			value.assign(1, char( (2 << 6) | (codepoint & 0x3F) ) );
+		} else if (codepoint <= 0xFFFF) {
+			codepoint-= 0x800;
+			value.assign(1, char( (14 << 4) | (codepoint >> 12) ) );
+			value.assign(1, char( (2 << 6) | ((codepoint >> 6) & 0x3F) ) );
+			value.assign(1, char( (2 << 6) | (codepoint & 0x3F) ) );
+		} else if (codepoint <= 0x10FFFF) {
+			codepoint-= 0x10000;
+			value.assign(1, char( (30 << 3) | (codepoint >> 18) ) );
+			value.assign(1, char( (2 << 6) | ((codepoint >> 12) & 0x3F) ) );
+			value.assign(1, char( (2 << 6) | ((codepoint >> 6) & 0x3F) ) );
+			value.assign(1, char( (2 << 6) | (codepoint & 0x3F) ) );
+		} else {
+			throw std::invalid_argument("invalid codepoint: " + std::to_string(codepoint));
+		}
+		return value;
 	}
 	inline Value &Value::parse(const std::string &text) {
 		std::string::size_type offset= 0;
@@ -582,6 +635,9 @@ namespace json {
 	}
 
 	inline void Value::String::format(std::string &buffer) const {
+		size_t codepoint;
+		std::string::size_type offset;
+
 		buffer= "\"";
 		for (std::string::size_type i= 0; i < _value.length(); ++i) {
 			switch(_value[i]) {
@@ -609,9 +665,17 @@ namespace json {
 				case '\f':
 					buffer+= "\\f";
 					break;
-				// TODO: Handle utf8 higher order characters and non-printables
 				default:
-					buffer+= _value[i];
+					offset= i;
+					codepoint= _codepoint(_value, offset);
+					if (offset - i == 1) {
+						buffer+= _value[i];
+					} else {
+						std::stringstream stream;
+
+						stream << std::setfill ('0') << std::setw(4) << std::hex << codepoint;
+						buffer= buffer + "\\u" + stream.str();
+					}
 					break;
 			}
 		}
