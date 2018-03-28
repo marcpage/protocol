@@ -44,9 +44,11 @@ namespace json {
 	class Value {
 		public:
 			Value():_value(NULL) {}
+			Value(const std::string &text):_value(NULL) {parse(text);}
 			Value(const Value &other):_value( (NULL == other._value) ? reinterpret_cast<Instance*>(NULL) : other._value->clone()) {}
 			~Value() {makeNull();}
 			Type type() const {return NULL == _value ? NullType : _value->type();}
+			bool is(Type t) const {return t == type();}
 			Value &parse(const std::string &text);
 			Value &parse(const std::string &text, std::string::size_type &offset);
 			bool boolean() const;
@@ -65,6 +67,7 @@ namespace json {
 			std::string &format(std::string &buffer) const;
 			operator std::string() const {std::string buffer; return format(buffer);}
 			Value &operator=(const Value &other) {makeNull(); _value= (NULL == other._value) ? reinterpret_cast<Instance*>(NULL) : other._value->clone(); return *this;}
+			Value &operator=(int value);
 			Value &operator=(int64_t value);
 			Value &operator=(double value);
 			Value &operator=(const std::string &value);
@@ -236,6 +239,9 @@ namespace json {
 
 		}
 		offset+= 1; // skip }
+		if (offset > text.length()) {
+			throw WrongType("Unterminated Object", __FILE__, __LINE__);
+		}
 	}
 	inline void Value::_parseArray(const std::string &text, std::string::size_type &offset) {
 		Value	value;
@@ -258,6 +264,9 @@ namespace json {
 
 		}
 		offset+= 1; // skip ]
+		if (offset > text.length()) {
+			throw WrongType("Unterminated Array", __FILE__, __LINE__);
+		}
 	}
 	inline void Value::_parseString(const std::string &text, std::string::size_type &offset) {
 		std::string	result;
@@ -332,12 +341,12 @@ namespace json {
 	inline void Value::_parseNumber(const std::string &text, std::string::size_type &offset) {
 		std::string 					integerChars("-+0123456789");
 		std::string						realChars("e.");
-		bool							hasRealChar= true;
+		bool							hasRealChar= false;
 		const std::string::size_type	start= offset;
 		size_t	after= 0;
 
 		while( (offset < text.length()) && ( (integerChars.find(text[offset]) != std::string::npos) || ((realChars.find(text[offset]) != std::string::npos)) ) ) {
-			hasRealChar= (realChars.find(text[offset]) != std::string::npos);
+			hasRealChar= hasRealChar || (realChars.find(text[offset]) != std::string::npos);
 			offset+= 1;
 		}
 		if (start == offset) {
@@ -350,10 +359,13 @@ namespace json {
 				throw WrongType(std::string("Illegal Number: ") + text.substr(start, offset - start), __FILE__, __LINE__);
 			}
 		} else {
-			*this= std::stoll(text.substr(start, offset - start), &after);
+			try {
+				*this= std::stoll(text.substr(start, offset - start), &after);
+			} catch(const std::exception &exception) {
+				throw WrongType(std::string("Illegal Number: ") + text.substr(start, offset - start), __FILE__, __LINE__);
+			}
 		}
 		if (after != offset - start) {
-
 			throw WrongType(std::string("Illegal Number: ") + text.substr(start, offset - start), __FILE__, __LINE__);
 		}
 	}
@@ -511,6 +523,10 @@ namespace json {
 			_value->format(buffer);
 		}
 		return buffer;
+	}
+	inline Value &Value::operator=(int value) {
+		*this= (int64_t)value;
+		return *this;
 	}
 	inline Value &Value::operator=(int64_t value) {
 		if (IntegerType == type()) {
