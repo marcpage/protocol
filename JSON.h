@@ -47,6 +47,7 @@ namespace json {
 
 	class Value {
 		public:
+			typedef std::vector<std::string> StringList;
 			Value():_value(NULL) {}
 			Value(const std::string &text):_value(NULL) {parse(text);}
 			Value(const Value &other):_value( (NULL == other._value) ? reinterpret_cast<Instance*>(NULL) : other._value->clone()) {}
@@ -60,6 +61,7 @@ namespace json {
 			double real() const;
 			const std::string &string() const;
 			int count() const;
+			StringList keys() const;
 			Value &clear();
 			Value &erase(int startIndex, int endIndex=-1);
 			Value &erase(const std::string &key);
@@ -182,6 +184,7 @@ namespace json {
 					virtual Type type() const {return ObjectType;}
 					virtual Instance *clone() const;
 					virtual void format(std::string &buffer) const;
+					StringList keys() const;
 					const Value &get(const std::string &key) const;
 					Value &get(const std::string &key) {return _value[key];}
 					void clear() {_value.clear();}
@@ -493,6 +496,10 @@ namespace json {
 		}
 		return 0;
 	}
+	inline Value::StringList Value::keys() const {
+		CheckType(type(), ObjectType);
+		return reinterpret_cast<Object*>(_value)->keys();
+	}
 	inline Value &Value::clear() {
 		const Type	t= type();
 
@@ -731,6 +738,14 @@ namespace json {
 			}
 		}
 		buffer+= "}";
+	}
+	inline Value::StringList Value::Object::keys() const {
+		StringList	keys;
+
+		for (std::map<std::string,Value>::const_iterator i= _value.begin(); i != _value.end(); ++i) {
+			keys.push_back(i->first);
+		}
+		return keys;
 	}
 	inline const Value &Value::Object::get(const std::string &key) const {
 		std::map<std::string,Value>::const_iterator found= _value.find(key);
