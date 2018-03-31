@@ -63,6 +63,85 @@ int main(int /*argc*/, char * /*argv*/[]) {
 				json::Value().parse(j1)["test \"me\""].string();
 				dotest(false);
 			} catch(const json::WrongType&) {}
+			try {
+				json::Value().parse("\"\\u123k\"");
+				dotest(false);
+			} catch(const json::WrongType&) {}
+			try {
+				json::Value().parse("\"\\u{1\"");
+				dotest(false);
+			} catch(const json::WrongType&) {}
+			try {
+				json::Value().parse("\"\\u{}\"");
+				dotest(false);
+			} catch(const json::WrongType&) {}
+			try {
+				json::Value().parse("\"\\u{123k}\"");
+				dotest(false);
+			} catch(const json::WrongType&) {}
+			try {
+				json::Value().parse("=");
+				dotest(false);
+			} catch(const json::WrongType&) {}
+			try {
+				json::Value().parse("....");
+				dotest(false);
+			} catch(const json::WrongType&) {}
+			try {
+				std::string(json::Value().parse("\"\xF8\""));
+				dotest(false);
+			} catch(const std::invalid_argument&) {}
+			printf("--------------------------------\n");
+			try {
+				json::Value().parse("\"\\u{110000}\"");
+				dotest(false);
+			} catch(const std::invalid_argument&) {}
+			printf("--------------------------------\n");
+			try {
+				std::string(json::Value().parse("\"\xc0\x80\""));
+				dotest(false);
+			} catch(const msg::Exception&) {}
+			try {
+				std::string(json::Value().parse("\"\xc0\x00\""));
+				dotest(false);
+			} catch(const msg::Exception&) {}
+			try {
+				std::string(json::Value().parse("\"\xe0\x80\x80\""));
+				dotest(false);
+			} catch(const msg::Exception&) {}
+			try {
+				std::string(json::Value().parse("\"\xe0\x00\x80\""));
+				dotest(false);
+			} catch(const msg::Exception&) {}
+			try {
+				std::string(json::Value().parse("\"\xe0\x80\x00\""));
+				dotest(false);
+			} catch(const msg::Exception&) {}
+			try {
+				std::string(json::Value().parse("\"\xf0\x00\x80\x80\""));
+				dotest(false);
+			} catch(const msg::Exception&) {}
+			try {
+				std::string(json::Value().parse("\"\xf0\x80\x00\x80\""));
+				dotest(false);
+			} catch(const msg::Exception&) {}
+			try {
+				std::string(json::Value().parse("\"\xf0\x80\x80\x00\""));
+				dotest(false);
+			} catch(const msg::Exception&) {}
+			dotest(json::Value().parse("\"\\u0041\"").string() == "A");
+			dotest(json::Value().parse("\"\\u00Ae\"").string() == "\xc2\xae");
+			dotest(json::Value().parse("\"\\u2211\"").string() == "\xe2\x88\x91");
+			dotest(json::Value().parse("\"\\u{1f605}\"").string() == "\xf0\x9f\x98\x85");
+			printf("Here we go\n");
+			dotest(json::Value().parse("\"\xc2\xae\"").string() == "\xc2\xae");
+			dotest(json::Value().parse("\"\xe2\x88\x91\"").string() == "\xe2\x88\x91");
+			dotest(json::Value().parse("\"\xf0\x9f\x98\x85\"").string() == "\xf0\x9f\x98\x85");
+			printf("%s\n", std::string(json::Value().parse("\"\xc2\xae\"")).c_str());
+			printf("%s\n", std::string(json::Value().parse("\"\xe2\x88\x91\"")).c_str());
+			dotest(std::string(json::Value().parse("\"\xc2\xae\"")) == "\"\\u00ae\"");
+			dotest(std::string(json::Value().parse("\"\xe2\x88\x91\"")) == "\"\\u2211\"");
+			dotest(std::string(json::Value().parse("\"\xf0\x9f\x98\x85\"")) == "\"\xf0\x9f\x98\x85\"");
 
 			const char 	*j2= " \t{\t \"real\"\t: 3.14159265, \"true\": true, \"false\": false, \"array\" : [ 1, 2, 3, 4, 5 ]} ";
 			json::Value	json2(j2);

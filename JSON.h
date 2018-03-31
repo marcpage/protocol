@@ -3,7 +3,6 @@
 
 /** @file JSON.h
 	@todo document
-	@todo test utf8 and error cases
 */
 
 #include <string>
@@ -316,11 +315,28 @@ namespace json {
 							result+= '\t';
 							break;
 						case 'u':
-							value= std::stol(text.substr(offset + 1, 4), &count, 16);
-							if (count != 4) {
-								throw WrongType(std::string("Illegal hex: ") + text.substr(offset + 1, 4), __FILE__, __LINE__);
+							if (text[offset + 1] == '{') {
+								const std::string::size_type	end= text.find('}', offset + 2);
+								const std::string::size_type	size= end - offset - 2;
+
+								if (std::string::npos == end) {
+									throw WrongType(std::string("Missing } for ECMAScript 6+ \\u{xxxxxxxx}"), __FILE__, __LINE__);
+								}
+								if (offset + 2 == end) {
+									throw WrongType(std::string("Empty codepoint for ECMAScript 6+ \\u{xxxxxxxx}"), __FILE__, __LINE__);
+								}
+								value= std::stol(text.substr(offset + 2, size), &count, 16);
+								if (count != size) {
+									throw WrongType(std::string("Illegal hex: ") + text.substr(offset + 1, size), __FILE__, __LINE__);
+								}
+								offset+= 1 + size + 1;
+							} else {
+								value= std::stol(text.substr(offset + 1, 4), &count, 16);
+								if (count != 4) {
+									throw WrongType(std::string("Illegal hex: ") + text.substr(offset + 1, 4), __FILE__, __LINE__);
+								}
+								offset+= 4;
 							}
-							offset+= 4;
 							result+= _utf8(value);
 							break;
 						default:
@@ -377,49 +393,83 @@ namespace json {
 		}
 	}
 	inline size_t Value::_codepoint(const std::string &text, std::string::size_type &offset) {
-		const bool oneByte= (offset < text.length()) && ((0x80 & text[offset]) == 0);
-		const bool twoBytes= (offset + 1 < text.length()) && ((0xE0 & text[offset]) == 0xC0);
-		const bool threeBytes= (offset + 2 < text.length()) && ((0xF0 & text[offset]) == 0xE0);
-		const bool fourBytes= (offset + 3 < text.length()) && ((0xF8 & text[offset]) == 0xF0);
+		/*
+			1	7	U+0000	U+007F  	0xxxxxxx
+			2	11	U+0080	U+07FF  	110xxxxx	10xxxxxx
+			3	16	U+0800	U+FFFF  	1110xxxx	10xxxxxx	10xxxxxx
+			4	21	U+10000	U+10FFFF	11110xxx	10xxxxxx	10xxxxxx	10xxxxxx
+		*/
+		const bool oneByte= (offset < text.length()) && ((0x80 & text.data()[offset]) == 0);
+		const bool twoBytes= (offset + 1 < text.length()) && ((0xE0 & text.data()[offset]) == 0xC0);
+		const bool threeBytes= (offset + 2 < text.length()) && ((0xF0 & text.data()[offset]) == 0xE0);
+		const bool fourBytes= (offset + 3 < text.length()) && ((0xF8 & text.data()[offset]) == 0xF0);
+		size_t codepoint;
 
 		if (oneByte) {
 			offset+= 1;
-			return text[offset - 1];
-		}
-		if (twoBytes) {
+			codepoint= text.data()[offset - 1]&0xFF;
+			AssertMessageException( codepoint <= 0x7F );
+		} else if (twoBytes) {
+			AssertMessageException( offset + 2 <= text.length() );
 			offset+= 2;
-			return 0x80 + ((size_t(text[offset - 2] & 0x1F) << 6) | size_t(text[offset - 1] & 0x3F));
-		}
-		if (threeBytes) {
+			codepoint= ((size_t(text.data()[offset - 2] & 0x1F) << 6) | size_t(text.data()[offset - 1] & 0x3F));
+			AssertMessageException( (text.data()[offset - 1] & 0xC0) == 0x80 );
+			AssertMessageException( (codepoint > 0x7F) && (codepoint <= 0x7FF) );
+		} else if (threeBytes) {
+			AssertMessageException( offset + 3 <= text.length() );
 			offset+= 3;
-			return 0x800 + ((size_t(text[offset - 3] & 0x0F) << 12) | (size_t(text[offset - 2] & 0x3F) << 6) | size_t(text[offset - 1] & 0x3F));
-		}
-		if (fourBytes) {
+			codepoint= ((size_t(text.data()[offset - 3] & 0x0F) << 12) | (size_t(text.data()[offset - 2] & 0x3F) << 6) | size_t(text.data()[offset - 1] & 0x3F));
+			AssertMessageException( (text.data()[offset - 1] & 0xC0) == 0x80 );
+			AssertMessageException( (text.data()[offset - 2] & 0xC0) == 0x80 );
+			AssertMessageException( (codepoint > 0x7FF) && (codepoint <= 0xFFFF) );
+		} else if (fourBytes) {
+			AssertMessageException( offset + 4 <= text.length() );
 			offset+= 4;
-			return 0x10000 + ((size_t(text[offset - 3] & 0x07) << 18) | (size_t(text[offset - 2] & 0x3F) << 12) | (size_t(text[offset - 2] & 0x3F) << 6) | size_t(text[offset - 1] & 0x3F));
+			codepoint= ((size_t(text.data()[offset - 4] & 0x07) << 18) | (size_t(text.data()[offset - 3] & 0x3F) << 12) | (size_t(text.data()[offset - 2] & 0x3F) << 6) | size_t(text.data()[offset - 1] & 0x3F));
+			AssertMessageException( (text.data()[offset - 1] & 0xC0) == 0x80 );
+			AssertMessageException( (text.data()[offset - 2] & 0xC0) == 0x80 );
+			AssertMessageException( (text.data()[offset - 3] & 0xC0) == 0x80 );
+			AssertMessageException( (codepoint > 0xFFFF) && (codepoint <= 0x10FFFF) );
+		} else {
+			throw std::invalid_argument("invalid codepoint: " + text.substr(offset, 4));
 		}
-		throw std::invalid_argument("invalid codepoint: " + text.substr(offset, 4));
+		return codepoint;
 	}
 	inline std::string Value::_utf8(size_t codepoint) {
+		/*
+			1	7	U+0000	U+007F  	0xxxxxxx
+			2	11	U+0080	U+07FF  	110xxxxx	10xxxxxx
+			3	16	U+0800	U+FFFF  	1110xxxx	10xxxxxx	10xxxxxx
+			4	21	U+10000	U+10FFFF	11110xxx	10xxxxxx	10xxxxxx	10xxxxxx
+		*/
 		std::string value;
 
 		if (codepoint <= 0x7F) {
 			value.assign(1, char(codepoint));
 		} else if (codepoint <= 0x7FF) {
-			codepoint-= 0x80;
-			value.assign(1, char( (6 << 5) | (codepoint >> 6) ) );
-			value.assign(1, char( (2 << 6) | (codepoint & 0x3F) ) );
+			char	buffer[3];
+
+			buffer[0]= (6 << 5) | (codepoint >> 6);
+			buffer[1]= (2 << 6) | (codepoint & 0x3F);
+			buffer[2]= 0;
+			value= buffer;
 		} else if (codepoint <= 0xFFFF) {
-			codepoint-= 0x800;
-			value.assign(1, char( (14 << 4) | (codepoint >> 12) ) );
-			value.assign(1, char( (2 << 6) | ((codepoint >> 6) & 0x3F) ) );
-			value.assign(1, char( (2 << 6) | (codepoint & 0x3F) ) );
+			char	buffer[4];
+
+			buffer[0]= (14 << 4) | (codepoint >> 12);
+			buffer[1]= (2 << 6) | ((codepoint >> 6) & 0x3F);
+			buffer[2]= (2 << 6) | (codepoint & 0x3F);
+			buffer[3]= 0;
+			value= buffer;
 		} else if (codepoint <= 0x10FFFF) {
-			codepoint-= 0x10000;
-			value.assign(1, char( (30 << 3) | (codepoint >> 18) ) );
-			value.assign(1, char( (2 << 6) | ((codepoint >> 12) & 0x3F) ) );
-			value.assign(1, char( (2 << 6) | ((codepoint >> 6) & 0x3F) ) );
-			value.assign(1, char( (2 << 6) | (codepoint & 0x3F) ) );
+			char	buffer[5];
+
+			buffer[0]= (30 << 3) | (codepoint >> 18);
+			buffer[1]= (2 << 6) | ((codepoint >> 12) & 0x3F);
+			buffer[2]= (2 << 6) | ((codepoint >> 6) & 0x3F);
+			buffer[3]= (2 << 6) | (codepoint & 0x3F);
+			buffer[4]= 0;
+			value= buffer;
 		} else {
 			throw std::invalid_argument("invalid codepoint: " + std::to_string(codepoint));
 		}
@@ -679,10 +729,17 @@ namespace json {
 						buffer+= _value[i];
 					} else {
 						std::stringstream stream;
+						const bool ecma6= (codepoint > 0xFFFF);
 
-						stream << std::setfill ('0') << std::setw(4) << std::hex << codepoint;
-						buffer= buffer + "\\u" + stream.str();
+						if (ecma6) { // previous to ecma6, u{xxxxxx} was not supported, keep utf8 codepoint
+							buffer= buffer + _value.substr(i, offset - i);
+						} else {
+							buffer= buffer + "\\u";
+							stream << std::setfill ('0') << std::setw(4) << std::hex << codepoint;
+							buffer= buffer + stream.str();
+						}
 					}
+					i= offset - 1;
 					break;
 			}
 		}
