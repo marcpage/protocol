@@ -296,6 +296,26 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			json3= false;
 			dotest(json3.is(json::BooleanType));
 			dotest(!json3.boolean());
+
+			json::Value	test2;
+			json::Value	test3;
+			json::Value test4;
+			json::Value	test5;
+
+			test2.makeObject();
+			test2["list"].makeArray();
+			test2["list"].append(json::Value("\"Test \\\"me\\\"\""));
+			test2["number"]= 1;
+			test2["boolean"]= true;
+			test2["null"];
+			test3.makeObject()["inner"]= std::string(test2);
+			test3["name"]= "inner \"one\"";
+			test4.makeObject()["twice"]= std::string(test3);
+			printf("'%s'\n", std::string(test4).c_str());
+			dotest(std::string(json::Value().parse(test4)) == std::string(test4));
+			test5.parse(test4["twice"].string());
+			dotest(std::string(test5) == std::string(test3));
+			dotest(std::string(json::Value().parse(test5["inner"].string())) == std::string(test2))
 		} catch(const std::exception &exception) {
 			fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
 		}
