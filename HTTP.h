@@ -218,10 +218,10 @@ namespace http {
 				line.consumeKey(text).trimmed(text).value(text, lastKey);
 				prefix.clear();
 			}
-			if (!line.trimmed(text).empty()) {
+			if ( !line.trimmed(text).empty() && (lastKey.length() > 0) ) {
 				_headers[lastKey]+= prefix + line.trimmed(text).value(text, value);
 			}
-		} while(!line.trimmed(text).empty());
+		} while(!line.trimmed(text).empty() && (lastKey.length() > 0));
 		return line.end;
 	}
 	inline void Headers::_Range::nextLine(const String &text) {
