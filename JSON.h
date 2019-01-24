@@ -17,14 +17,14 @@ namespace json {
 
 	enum Type {NullType, ObjectType, ArrayType, StringType, IntegerType, RealType, BooleanType};
 
-	#define TypeCase(name) case name: return #name
+	#define TypeCase(name) case name: return std::string(#name).substr(0,strlen(#name)-strlen("Type"))
 	#define CheckType(found, expected) if (expected != found) {throw WrongType(expected, found, __FILE__, __LINE__);}
 	#define Check2Types(found, expected1, expected2) if ( (expected1 != found) && (expected2 != found)) {throw WrongType(expected1, expected2, found, __FILE__, __LINE__);}
 	#define Check3Types(found, expected1, expected2, expected3) if ( (expected1 != found) && (expected2 != found) && (expected3 != found)) {throw WrongType(expected1, expected2, expected3, found, __FILE__, __LINE__);}
 
 	class WrongType : public msg::Exception {
 		public:
-			static const char *name(Type type) {
+			static const std::string name(Type type) {
 				switch(type) {
 					TypeCase(NullType);
 					TypeCase(ObjectType);

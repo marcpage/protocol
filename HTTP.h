@@ -4,7 +4,7 @@
 /** @file HTTP.h
 	@todo document
 	@todo Test Query with just name, no value (no equals)
-	@todo Test \n only line ends, \r only line endings and mixtures of line endings
+	@todo Test \\n only line ends, \\r only line endings and mixtures of line endings
 	@todo Test parsing a response line with no line endings
 	@todo Test response with no protocol version (no number after the slash)
 */
