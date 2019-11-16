@@ -1,7 +1,4 @@
 #include "protocol/HTTP.h"
-#include "os/Thread.h"
-#include "os/BufferAddress.h"
-#include "os/BufferString.h"
 #include "os/SocketServer.h"
 #include "os/AddressIPv4.h"
 #include "os/AddressIPv6.h"
@@ -290,6 +287,11 @@ void testResponse() {
 	dotest(std::string(fullResponse) != fullResponseRaw);
 	fullResponse= responseCopy;
 	dotest(std::string(fullResponse) == fullResponseRaw);
+}
+
+void serverThread(int port) {
+	net::AddressIPv4	serverAddress(port);
+	net::SocketServer	server(serverAddress.family());
 }
 
 class Server : public exec::Thread {
