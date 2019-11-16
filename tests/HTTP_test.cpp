@@ -3,6 +3,7 @@
 #include "os/AddressIPv4.h"
 #include "os/AddressIPv6.h"
 #include <stdio.h>
+#include <thread>
 
 #define dotest(condition) \
 	if(!(condition)) { \
@@ -55,11 +56,21 @@ void testHeaders() {
 "Cache-Control: no-cache\r"
 "\r"
 "Body: text\r";
+	const char * const header6 =
+"Host: net.tutsplus.com\r"
+"User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) \r"
+"\tGecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)\r"
+"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r"
+"Accept-Language: en-us,en;q=0.5\r"
+"Accept-Encoding: gzip,deflate\r"
+"Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\r"
+"Keep-Alive: 300";
 	http::Headers	h1(header1);
 	http::Headers	h2(header2);
 	http::Headers	h3(header3);
 	http::Headers	h4(h1);
 	http::Headers	h5;
+	http::Headers	h6(header6);
 
 	dotest(!h1.empty());
 	dotest(h1.has("Host"));
@@ -139,6 +150,16 @@ void testHeaders() {
 	h4.remove("Cache-Control");
 	dotest(h4.empty());
 
+	dotest(!h6.empty());
+	dotest(h6.has("Host"));
+	dotest(h6.has("User-Agent"));
+	dotest(h6.has("Accept"));
+	dotest(h6.has("Accept-Language"));
+	dotest(h6.has("Accept-Encoding"));
+	dotest(h6.has("Accept-Charset"));
+	dotest(h6.has("Keep-Alive"));
+	dotest(h6["Keep-Alive"] == "300");
+
 	h3.remove("Cookie");
 	dotest(!h3.has("Cookie"));
 	h3 = h2;
@@ -152,12 +173,23 @@ void testQuery() {
 	http::Query test1;
 	http::Query test2;
 	http::Query test4("key4", http::Query::IsQuery);
-	http::Query	test5("http://server.com/action.asp?test=1&test=2&time=now&help#NoStoppingUs", http::Query::SearchForQuery);
+	std::string url5("http://server.com/action.asp");
+	std::string query5("?help&test=1&test=2&time=now");
+	std::string	anchor5("#NoStoppingUs");
+	http::Query	test5(url5 + query5 + anchor5, http::Query::SearchForQuery);
 
 	dotest(test5.getOne("test") == "1");
 	dotest(test5.getOne("time") == "now");
+	try {
+		test5.getOne("This Key Does Not Exist");
+		dotest(false);
+	} catch(const std::out_of_range &exception) {
+		printf("Expected exception: %s\n", exception.what());
+	}
 	dotest(test5.has("help"));
 	dotest(!test5.hasValue("help"));
+	dotest(query5 == (std::string)test5);
+	printf("query5 = '%s' test5 = '%s'\n", query5.c_str(), ((std::string)test5).c_str());
 	test1["key1"] = "value1";
 	test2["key2"] = "value2";
 	dotest(std::string(test1) == "?key1=value1");
@@ -261,6 +293,21 @@ void testResponseLine() {
 	dotest(http::ResponseLine("FTP/5.1 200 OK\r\n").version() == "5.1");
 	dotest(http::ResponseLine("FTP/5.1 200 OK\r\n").code() == "200");
 	dotest(http::ResponseLine("FTP/5.1 200 OK\r\n").message() == "OK");
+	dotest(http::ResponseLine("FTP/5.1 200 OK\r").protocol() == "FTP");
+	dotest(http::ResponseLine("FTP/5.1 200 OK\r").version() == "5.1");
+	dotest(http::ResponseLine("FTP/5.1 200 OK\r").code() == "200");
+	dotest(http::ResponseLine("FTP/5.1 200 OK\r").message() == "OK");
+	dotest(http::ResponseLine("FTP/5.1 200 OK\n").protocol() == "FTP");
+	dotest(http::ResponseLine("FTP/5.1 200 OK\n").version() == "5.1");
+	dotest(http::ResponseLine("FTP/5.1 200 OK\n").code() == "200");
+	dotest(http::ResponseLine("FTP/5.1 200 OK\n").message() == "OK");
+	dotest(http::ResponseLine("FTP/5.1 200 OK").protocol() == "FTP");
+	dotest(http::ResponseLine("FTP/5.1 200 OK").version() == "5.1");
+	dotest(http::ResponseLine("FTP/5.1 200 OK").code() == "200");
+	dotest(http::ResponseLine("FTP/5.1 200 OK").message() == "OK");
+	dotest(http::ResponseLine("FTP").protocol() == "FTP");
+	dotest(http::ResponseLine().protocol() == "HTTP");
+	printf("empty response line protocol = '%s'\n", http::ResponseLine().protocol().c_str());
 
 	http::ResponseLine response;
 
@@ -289,98 +336,70 @@ void testResponse() {
 	dotest(std::string(fullResponse) == fullResponseRaw);
 }
 
+static bool ServerThreadRunning = true;
+
+std::string readline(net::Socket *connection) {
+	std::string	buffer;
+	std::string	line = "";
+
+	while (buffer != "\n") {
+		connection->read(1, buffer);
+		line += buffer;
+	}
+	return line;
+}
+
 void serverThread(int port) {
 	net::AddressIPv4	serverAddress(port);
 	net::SocketServer	server(serverAddress.family());
+	printf("Listening at http://localhost:%d/\n", port);
+	printf("To quit, go to http://localhost:%d/quit\n", port);
+	server.reuseAddress();
+	server.reusePort();
+	server.bind(serverAddress);
+	server.listen(10);
+	std::string	line, buffer;
+
+	try	{
+		while(ServerThreadRunning) {
+			net::AddressIPv6	connectedTo;
+			net::Socket			*connection= new net::Socket();
+
+			printf("THREAD: %zx: Waiting for connection\n", std::hash<std::thread::id>{}(std::this_thread::get_id()));
+			server.accept(connectedTo, *connection);
+			printf("THREAD: %zx: Connection received\n", std::hash<std::thread::id>{}(std::this_thread::get_id()));
+			buffer.clear();
+			do {
+				line= readline(connection);
+				buffer+= line;
+			} while ( (line != "\r\n") && (line != "\r") && (line != "\n") );
+
+			http::Request 	request(buffer);
+			http::Response	response;
+
+			response.info().code()= "200";
+			response.info().message()= "OK";
+
+			buffer= response;
+			connection->write(buffer);
+			buffer= request;
+			connection->write(buffer);
+			connection->close();
+			delete connection;
+			if (request.info().path() == "/quit") {
+				ServerThreadRunning = false;
+				connection->close();
+			}
+			printf("THREAD %zx: Request\n%s\nTHREAD %zx: Response\n%s\n", std::hash<std::thread::id>{}(std::this_thread::get_id()), std::string(request).c_str(), std::hash<std::thread::id>{}(std::this_thread::get_id()), std::string(response).c_str());
+		}
+	} catch(const std::exception &exception) {
+		if(!ServerThreadRunning) {
+			printf("THREAD: %zx: EXPECTED: Server Thread: %s\n", std::hash<std::thread::id>{}(std::this_thread::get_id()), exception.what());
+		} else {
+			printf("THREAD: %zx: FAILED: Server Thread Exception: %s\n", std::hash<std::thread::id>{}(std::this_thread::get_id()), exception.what());
+		}
+	}
 }
-
-class Server : public exec::Thread {
-	public:
-		Server(int port)
-				:exec::Thread(KeepAroundAfterFinish),
-				_serverAddress(port),
-				_server(_serverAddress.family()),
-				_exiting(false) {
-			printf("Listening at http://localhost:%d/\n", port);
-			printf("To quit, go to http://localhost:%d/quit\n", port);
-			_server.reuseAddress();
-			_server.reusePort();
-			_server.bind(_serverAddress);
-			_server.listen(1);
-			start();
-		}
-		virtual ~Server() {}
-		void shutdown() {
-			_exiting= true;
-			_server.close();
-			join();
-		}
-	protected:
-		virtual void *run() {
-			std::string	line, buffer;
-
-			try	{
-				while(!_exiting) {
-					net::AddressIPv6	connectedTo;
-					net::Socket			*connection= new net::Socket();
-
-					printf("THREAD: %p: Waiting for connection\n", exec::ThreadId::current().thread());
-					_server.accept(connectedTo, *connection);
-					printf("THREAD: %p: Connection received\n", exec::ThreadId::current().thread());
-					buffer.clear();
-					do {
-						line= _readline(connection);
-						buffer+= line;
-					} while ( (line != "\r\n") && (line != "\r") && (line != "\n") );
-
-					http::Request 	request(buffer);
-					http::Response	response;
-
-					response.info().code()= "200";
-					response.info().message()= "OK";
-
-					buffer= response;
-					connection->write(BufferString(buffer), buffer.size());
-					buffer= request;
-					connection->write(BufferString(buffer), buffer.size());
-					connection->close();
-					delete connection;
-					if (request.info().path() == "/quit") {
-						shutdown();
-					}
-					printf("THREAD %p: Request\n%s\nTHREAD %p: Response\n%s\n", exec::ThreadId::current().thread(), std::string(request).c_str(), exec::ThreadId::current().thread(), std::string(response).c_str());
-				}
-			} catch(const std::exception &exception) {
-				if(_exiting) {
-					printf("THREAD: %p: EXPECTED: Server Thread: %s\n", exec::ThreadId::current().thread(), exception.what());
-				} else {
-					printf("THREAD: %p: FAILED: Server Thread Exception: %s\n", exec::ThreadId::current().thread(), exception.what());
-				}
-			}
-			return NULL;
-		}
-		virtual void *handle(const std::exception &exception, void *result) {
-			printf("THREAD: %p: FAIL: Exception: %s\n", exec::ThreadId::current().thread(), exception.what());
-			return result;
-		}
-	private:
-		net::AddressIPv4	_serverAddress;
-		net::SocketServer	_server;
-		bool				_exiting;
-		Server(const Server&); ///< Prevent Usage
-		Server &operator=(const Server&); ///< Prevent Usage
-		std::string _readline(net::Socket *connection) {
-			char			byte= '\0';
-			BufferAddress	buffer(&byte, 1);
-			std::string		line = "";
-
-			while (byte != '\n') {
-				connection->read(buffer, 1);
-				line += byte;
-			}
-			return line;
-		}
-};
 
 int main(int argc, char * /*argv*/[]) {
 	int	iterations= 4000;
@@ -388,7 +407,7 @@ int main(int argc, char * /*argv*/[]) {
 	iterations= 1;
 #endif
 	if (argc == 2) {
-		Server	server(8123);
+		std::thread	server(serverThread, 8123);
 
 		server.join();
 	}
