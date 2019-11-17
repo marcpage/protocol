@@ -343,7 +343,7 @@ std::string readline(net::Socket *connection) {
 	std::string	line = "";
 
 	while (buffer != "\n") {
-		connection->read(1, buffer);
+		buffer = connection->read(1);
 		line += buffer;
 	}
 	return line;
