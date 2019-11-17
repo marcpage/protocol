@@ -322,7 +322,7 @@ namespace http {
 
 			if (position < positionEnd) {
 				String::size_type	equalsPos = query.find('=', position);
-				String::size_type	keyEndPos = equalsPos == String::npos ? positionEnd : equalsPos;
+				String::size_type	keyEndPos = equalsPos == positionEnd ? positionEnd : (equalsPos > positionEnd ? positionEnd : equalsPos);
 				String				key = unescape(query.substr(position, keyEndPos - position));
 				String				value = keyEndPos < positionEnd ? unescape(query.substr(keyEndPos + 1, positionEnd - keyEndPos - 1)) : String();
 

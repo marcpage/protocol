@@ -187,6 +187,7 @@ void testQuery() {
 		printf("Expected exception: %s\n", exception.what());
 	}
 	dotest(test5.has("help"));
+	printf("test5: '%s'\n", std::string(test5).c_str());
 	dotest(!test5.hasValue("help"));
 	dotest(query5 == (std::string)test5);
 	printf("query5 = '%s' test5 = '%s'\n", query5.c_str(), ((std::string)test5).c_str());
@@ -266,7 +267,7 @@ void testRequestLine() {
 		fprintf(stderr, "FAILED: We should have thrown\n");
 	} catch(const std::out_of_range &) {
 	} catch(const std::exception &exception) {
-		fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
+		fprintf(stderr, "FAILED: Wrong type of Exception: %s\n", exception.what());
 	}
 }
 
