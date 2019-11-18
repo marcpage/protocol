@@ -380,7 +380,7 @@ namespace http {
 					}
 					prefix = "&";
 				}
-			} else {
+			} else { // shouldn't happen. Any time a key is added, at least an empty value should be put in the list
 				result += prefix + escape(key->first);
 				prefix = "&";
 			}
@@ -398,7 +398,7 @@ namespace http {
 	inline const Query::String &Query::getOne(const String &name) const {
 		const StringList &found= get(name);
 
-		if (0 == found.size()) {
+		if (0 == found.size()) { // should never happen. Any time a key is added, at least an empty value should be put in the list
 			throw std::out_of_range(name);
 		}
 		return found[0];
