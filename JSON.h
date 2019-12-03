@@ -536,7 +536,7 @@ namespace json {
 			case ObjectType: return reinterpret_cast<Object*>(_value)->count();
 			case ArrayType: return reinterpret_cast<Array*>(_value)->count();
 			case StringType: return reinterpret_cast<String*>(_value)->count();
-			case NullType:
+			case NullType: return 0;
 			case IntegerType:
 			case RealType:
 			case BooleanType:
@@ -564,6 +564,7 @@ namespace json {
 				reinterpret_cast<String*>(_value)->clear();
 				break;
 			case NullType:
+				break;
 			case IntegerType:
 			case RealType:
 			case BooleanType:
@@ -584,6 +585,7 @@ namespace json {
 				reinterpret_cast<String*>(_value)->erase(startIndex, endIndex);
 				break;
 			case NullType:
+				break;
 			case IntegerType:
 			case RealType:
 			case BooleanType:
