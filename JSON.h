@@ -69,7 +69,8 @@ namespace json {
 			Value &makeArray();
 			Value &makeNull() {delete _value; _value = NULL; return *this;}
 			Value &append(const Value &value);
-			std::string &format(std::string &buffer) const;
+			std::string &format(std::string &buffer, int indent=-1, int indentLevel=0) const;
+			std::string format(int indent=-1, int indentLevel=0) const;
 			operator std::string() const {std::string buffer; return format(buffer);}
 			Value &operator=(const Value &other) {makeNull(); _value= (NULL == other._value) ? reinterpret_cast<Instance*>(NULL) : other._value->clone(); return *this;}
 			Value &operator=(int value);
@@ -89,7 +90,7 @@ namespace json {
 					virtual ~Instance() {}
 					virtual Type type() const=0;
 					virtual Instance *clone() const=0;
-					virtual void format(std::string &buffer) const=0;
+					virtual void format(std::string &buffer, int indent, int indentLevel) const=0;
 				private:
 					Instance(const Instance &);
 					Instance &operator=(const Instance &);
@@ -101,7 +102,7 @@ namespace json {
 					virtual ~String() {}
 					virtual Type type() const {return StringType;}
 					virtual Instance *clone() const {return new String(_value);}
-					virtual void format(std::string &buffer) const;
+					virtual void format(std::string &buffer, int indent, int indentLevel) const;
 					std::string &value() {return _value;}
 					const std::string &value() const {return _value;}
 					int count() const {return _value.length();}
@@ -119,7 +120,7 @@ namespace json {
 					virtual ~Integer() {}
 					virtual Type type() const {return IntegerType;}
 					virtual Instance *clone() const {return new Integer(_value);}
-					virtual void format(std::string &buffer) const {buffer= std::to_string(_value);}
+					virtual void format(std::string &buffer, int /*indent*/, int /*indentLevel*/) const {buffer= std::to_string(_value);}
 					int64_t &value() {return _value;}
 					const int64_t &value() const {return _value;}
 				private:
@@ -134,7 +135,7 @@ namespace json {
 					virtual ~Real() {}
 					virtual Type type() const {return RealType;}
 					virtual Instance *clone() const {return new Real(_value);}
-					virtual void format(std::string &buffer) const {buffer= std::to_string(_value);}
+					virtual void format(std::string &buffer, int /*indent*/, int /*indentLevel*/) const {buffer= std::to_string(_value);}
 					double &value() {return _value;}
 					const double &value() const {return _value;}
 				private:
@@ -149,7 +150,7 @@ namespace json {
 					virtual ~Boolean() {}
 					virtual Type type() const {return BooleanType;}
 					virtual Instance *clone() const {return new Boolean(_value);}
-					virtual void format(std::string &buffer) const {buffer= _value ? "true" : "false";}
+					virtual void format(std::string &buffer, int /*indent*/, int /*indentLevel*/) const {buffer= _value ? "true" : "false";}
 					bool &value() {return _value;}
 					const bool &value() const {return _value;}
 				private:
@@ -164,7 +165,7 @@ namespace json {
 					virtual ~Array() {}
 					virtual Type type() const {return ArrayType;}
 					virtual Instance *clone() const;
-					virtual void format(std::string &buffer) const;
+					virtual void format(std::string &buffer, int indent, int indentLevel) const;
 					const Value &get(int index) const {return _value[index];}
 					Value &get(int index) {return _value[index];}
 					void clear() {_value.clear();}
@@ -183,7 +184,7 @@ namespace json {
 					virtual ~Object() {}
 					virtual Type type() const {return ObjectType;}
 					virtual Instance *clone() const;
-					virtual void format(std::string &buffer) const;
+					virtual void format(std::string &buffer, int indent, int indentLevel) const;
 					StringList keys() const;
 					const Value &get(const std::string &key) const;
 					Value &get(const std::string &key) {return _value[key];}
@@ -638,13 +639,18 @@ namespace json {
 		reinterpret_cast<Array*>(_value)->append(value);
 		return *this;
 	}
-	inline std::string &Value::format(std::string &buffer) const {
+	inline std::string &Value::format(std::string &buffer, int indent, int indentLevel) const {
 		if (NULL == _value) {
 			buffer= "null";
 		} else {
-			_value->format(buffer);
+			_value->format(buffer, indent, indentLevel);
 		}
 		return buffer;
+	}
+	inline std::string Value::format(int indent, int indentLevel) const {
+		std::string formatted;
+
+		return format(formatted, indent, indentLevel);
 	}
 	inline Value &Value::operator=(int value) {
 		*this= (int64_t)value;
@@ -710,7 +716,7 @@ namespace json {
 		return reinterpret_cast<const Object*>(_value)->get(key);
 	}
 
-	inline void Value::String::format(std::string &buffer) const {
+	inline void Value::String::format(std::string &buffer, int /*indent*/, int /*indentLevel*/) const {
 		size_t codepoint;
 		std::string::size_type offset;
 
@@ -774,19 +780,26 @@ namespace json {
 		}
 		return value;
 	}
-	inline void Value::Array::format(std::string &buffer) const {
+	inline void Value::Array::format(std::string &buffer, int indent, int indentLevel) const {
 		std::string	value;
-		std::string	prefix= "";
+		std::string	suffix= ",";
+		std::string linePrefix = "";
+		std::string	lastLinePrefix = "";
+		std::string lineSuffix = (indent >= 0) ? "\n" : "";
 
-		buffer= "[";
-		for (std::vector<Value>::const_iterator i= _value.begin(); i != _value.end(); ++i) {
-			i->format(value);
-			buffer+= prefix + value;
-			if (prefix.length() == 0) {
-				prefix= ",";
-			}
+		if (indent >= 0) {
+			linePrefix.assign(indent * (indentLevel + 1), ' ');
+			lastLinePrefix.assign(indent * indentLevel, ' ');
 		}
-		buffer+= "]";
+		buffer= "[" + lineSuffix;
+		for (std::vector<Value>::const_iterator i= _value.begin(); i != _value.end(); ++i) {
+			i->format(value, indent, indentLevel + 1);
+			if ((i + 1) == _value.end()) {
+				suffix= "";
+			}
+			buffer+= linePrefix + value + suffix + lineSuffix;
+		}
+		buffer+= lastLinePrefix + "]";
 	}
 
 	inline Value::Instance *Value::Object::clone() const {
@@ -797,23 +810,28 @@ namespace json {
 		}
 		return value;
 	}
-	inline void Value::Object::format(std::string &buffer) const {
+	inline void Value::Object::format(std::string &buffer, int indent, int indentLevel) const {
 		Value	key;
 		std::string	keyStr;
 		std::string	value;
-		std::string	prefix= "";
+		std::string linePrefix = "";
+		std::string	lastLinePrefix = "";
+		std::string lineSuffix = (indent >= 0) ? "\n" : "";
+		size_t itemsLeft = _value.size();
 
-		buffer= "{";
-		for (std::map<std::string,Value>::const_iterator i= _value.begin(); i != _value.end(); ++i) {
-			key= i->first;
-			key.format(keyStr);
-			i->second.format(value);
-			buffer+= prefix + keyStr + ":" + value;
-			if (prefix.length() == 0) {
-				prefix= ",";
-			}
+		if (indent >= 0) {
+			linePrefix.assign(indent * (indentLevel + 1), ' ');
+			lastLinePrefix.assign(indent * indentLevel, ' ');
 		}
-		buffer+= "}";
+		buffer= "{" + lineSuffix;
+		for (std::map<std::string,Value>::const_iterator i= _value.begin(); i != _value.end(); ++i) {
+			itemsLeft -= 1;
+			key= i->first;
+			key.format(keyStr, indent, indentLevel + 1);
+			i->second.format(value, indent, indentLevel + 1);
+			buffer+= linePrefix + keyStr + ":" + value + (itemsLeft == 0 ? "" : ",") + lineSuffix;
+		}
+		buffer+= lastLinePrefix + "}";
 	}
 	inline Value::StringList Value::Object::keys() const {
 		StringList	keys;
