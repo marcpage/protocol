@@ -35,6 +35,28 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			dotest(json::Value().parse(j1)["test \"me\""][7].is(json::BooleanType));
 			dotest(json::Value().parse(j1)["test \"me\""][8].is(json::NullType));
 			dotest(json::Value().parse(j1)["test \"me\""][9].is(json::StringType));
+			dotest(json::Value().count() == 0);
+
+			json::Value test6;
+			test6["test"] = "me";
+			dotest(test6.is(json::ObjectType));
+			dotest(test6["test"].is(json::StringType));
+			dotest(test6["test"].string() == "me");
+
+			json::Value test7;
+			test7.erase("key");
+			dotest(test7.is(json::ObjectType));
+
+			json::Value test8;
+			dotest(!test8.has("key"));
+			dotest(test8.is(json::ObjectType));
+
+			json::Value test9;
+			test9.append(json::Value() = "me");
+			dotest(test9.is(json::ArrayType));
+			dotest(test9.count() == 1);
+			dotest(test9[0].string() == "me");
+
 			try {
 				json::Value().parse(j1)["test \"me\""][0].count();
 				dotest(false);

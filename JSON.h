@@ -76,6 +76,7 @@ namespace json {
 			Value &operator=(int64_t value);
 			Value &operator=(double value);
 			Value &operator=(const std::string &value);
+			Value &operator=(const char *value);
 			Value &operator=(bool value);
 			Value &operator[](int index);
 			const Value &operator[](int index) const;
@@ -536,13 +537,12 @@ namespace json {
 			case ObjectType: return reinterpret_cast<Object*>(_value)->count();
 			case ArrayType: return reinterpret_cast<Array*>(_value)->count();
 			case StringType: return reinterpret_cast<String*>(_value)->count();
-			case NullType: return 0;
+			case NullType: break;
 			case IntegerType:
 			case RealType:
 			case BooleanType:
 			default:
 				Check3Types(t, ObjectType, ArrayType, StringType);
-				break;
 		}
 		return 0;
 	}
@@ -570,7 +570,6 @@ namespace json {
 			case BooleanType:
 			default:
 				Check3Types(t, ObjectType, ArrayType, StringType);
-				break;
 		}
 		return *this;
 	}
@@ -592,16 +591,23 @@ namespace json {
 			case ObjectType:
 			default:
 				Check2Types(t, ArrayType, StringType);
-				break;
 		}
 		return *this;
 	}
 	inline Value &Value::erase(const std::string &key) {
+		if (is(NullType)) {
+			makeObject();
+		}
+
 		CheckType(type(), ObjectType);
 		reinterpret_cast<Object*>(_value)->erase(key);
 		return *this;
 	}
 	inline bool Value::has(const std::string &key) {
+		if (is(NullType)) {
+			makeObject();
+		}
+
 		CheckType(type(), ObjectType);
 		return reinterpret_cast<Object*>(_value)->has(key);
 	}
@@ -624,6 +630,10 @@ namespace json {
 		return *this;
 	}
 	inline Value &Value::append(const Value &value) {
+		if (is(NullType)) {
+			makeArray();
+		}
+
 		CheckType(type(), ArrayType);
 		reinterpret_cast<Array*>(_value)->append(value);
 		return *this;
@@ -667,6 +677,9 @@ namespace json {
 		}
 		return *this;
 	}
+	inline Value &Value::operator=(const char *value) {
+		return (*this) = std::string(value);
+	}
 	inline Value &Value::operator=(bool value) {
 		if (BooleanType == type()) {
 			reinterpret_cast<Boolean*>(_value)->value()= value;
@@ -685,6 +698,10 @@ namespace json {
 		return reinterpret_cast<const Array*>(_value)->get(index);
 	}
 	inline Value &Value::operator[](const std::string &key) {
+		if (is(NullType)) {
+			makeObject();
+		}
+
 		CheckType(type(), ObjectType);
 		return reinterpret_cast<Object*>(_value)->get(key);
 	}
