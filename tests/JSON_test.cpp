@@ -338,6 +338,15 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			test5.parse(test4["twice"].string());
 			dotest(std::string(test5) == std::string(test3));
 			dotest(std::string(json::Value().parse(test5["inner"].string())) == std::string(test2))
+
+			printf("test2: %s\n", test2.format(4).c_str());
+			printf("test3: %s\n", test3.format(4).c_str());
+			printf("test4: %s\n", test4.format(4).c_str());
+			printf("test5: %s\n", test5.format(4).c_str());
+			printf("test6: %s\n", test6.format(4).c_str());
+			printf("test7: %s\n", test7.format(4).c_str());
+			printf("test8: %s\n", test8.format(4).c_str());
+			printf("test9: %s\n", test9.format(4).c_str());
 		} catch(const std::exception &exception) {
 			fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
 		}
