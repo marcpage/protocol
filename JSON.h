@@ -33,9 +33,9 @@ namespace json {
 					TypeCase(IntegerType);
 					TypeCase(RealType);
 					TypeCase(BooleanType);
-					default: break;
+					default: break; // Never hit in code coverage
 				}
-				return "Corrupt";
+				return "Corrupt"; // Never hit in code coverage
 			}
 			WrongType(const std::string &message, const char *file= NULL, int line= 0) throw():msg::Exception(message, file, line) {}
 			WrongType(Type expected, Type found, const char *file= NULL, int line= 0) throw():msg::Exception(std::string("Expected ") + name(expected) + " Found " + name(found), file, line) {}
@@ -47,7 +47,7 @@ namespace json {
 	class Value {
 		public:
 			typedef std::vector<std::string> StringList;
-			Value():_value(NULL) {}
+			Value(Type t=NullType):_value(_create(t)) {}
 			Value(const std::string &text):_value(NULL) {parse(text);}
 			Value(const Value &other):_value( (NULL == other._value) ? reinterpret_cast<Instance*>(NULL) : other._value->clone()) {}
 			~Value() {makeNull();}
@@ -206,6 +206,7 @@ namespace json {
 			void _parseNumber(const std::string &text, std::string::size_type &offset);
 			static size_t _codepoint(const std::string &text, std::string::size_type &offset);
 			static std::string _utf8(size_t codepoint);
+			static Instance *_create(Type t);
 	};
 
 	inline std::string::size_type Value::_skipWhitespace(const std::string &text, std::string::size_type start) {
@@ -347,7 +348,7 @@ namespace json {
 					offset+= 1;
 					break;
 				case '"':
-					break;
+					break; // Don't know why we never hit this in code coverage
 				default:
 					result+= text[offset];
 					offset+= 1;
@@ -476,6 +477,20 @@ namespace json {
 			throw std::invalid_argument("invalid codepoint: " + std::to_string(codepoint));
 		}
 		return value;
+	}
+	inline Value::Instance *Value::_create(Type t) {
+		switch(t) {
+			case ObjectType: return new Object();
+			case ArrayType: return new Array();
+			case StringType: return new String("");
+			case IntegerType: return new Integer(0);
+			case RealType: return new Real(0.0);
+			case BooleanType: return new Boolean(false);
+			case NullType:
+			default:
+				break;
+		}
+		return NULL;
 	}
 	inline Value &Value::parse(const std::string &text) {
 		std::string::size_type offset= 0;

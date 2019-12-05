@@ -8,7 +8,7 @@
 	}
 
 int main(int /*argc*/, char * /*argv*/[]) {
-	int	iterations= 1000;
+	int	iterations= 350;
 #ifdef __Tracer_h__
 	iterations= 1;
 #endif
@@ -36,6 +36,19 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			dotest(json::Value().parse(j1)["test \"me\""][8].is(json::NullType));
 			dotest(json::Value().parse(j1)["test \"me\""][9].is(json::StringType));
 			dotest(json::Value().count() == 0);
+			dotest(json::Value(json::NullType).is(json::NullType));
+			dotest(json::Value(json::ObjectType).is(json::ObjectType));
+			dotest(json::Value(json::ObjectType).count() == 0);
+			dotest(json::Value(json::ArrayType).is(json::ArrayType));
+			dotest(json::Value(json::ArrayType).count() == 0);
+			dotest(json::Value(json::IntegerType).is(json::IntegerType));
+			dotest(json::Value(json::IntegerType).integer() == 0);
+			dotest(json::Value(json::BooleanType).is(json::BooleanType));
+			dotest(json::Value(json::BooleanType).boolean() == false);
+			dotest(json::Value(json::RealType).is(json::RealType));
+			dotest(json::Value(json::RealType).real() == 0.0);
+			dotest(json::Value(json::StringType).is(json::StringType));
+			dotest(json::Value(json::StringType).string() == "");
 
 			json::Value test6;
 			test6["test"] = "me";
