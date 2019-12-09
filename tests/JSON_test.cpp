@@ -360,6 +360,13 @@ int main(int /*argc*/, char * /*argv*/[]) {
 			printf("test7: %s\n", test7.format(4).c_str());
 			printf("test8: %s\n", test8.format(4).c_str());
 			printf("test9: %s\n", test9.format(4).c_str());
+
+			const char *j3= "{\"component\":\"Student_18.0.0\",\"licenseData\":\"{\\\"pn\\\":\\\"Student_PKG\\\",\\\"pv\\\":\\\"18.0.0\\\",\\\"ed\\\":\\\"Student Edition\\\",\\\"lt\\\":\\\"Main\\\",\\\"st\\\":\\\"Activated\\\",\\\"ue\\\":\\\"john.doe@company.com\\\",\\\"up\\\":\\\"2685783\\\",\\\"sn\\\":\\\"\\\",\\\"el\\\":\\\"\\\",\\\"ac\\\":\\\"VP6B-28NB-C83Z-RBWM-MLYD\\\",\\\"ti\\\":\\\"92FD44443BB52D4FE05400144FF9CD74\\\"}\",\"sessionData\":\"\"}";
+			const std::string j4= json::Value().parse(j3)["licenseData"].string();
+
+			printf("-=- original -=-\n'%s'\n-=- parsed -=-\n'%s'\n", j3, std::string(json::Value().parse(j3)).c_str());
+			printf("-=- original -=-\n'%s'\n-=- parsed -=-\n'%s'\n", j4.c_str(), std::string(json::Value().parse(j4)).c_str());
+
 		} catch(const std::exception &exception) {
 			fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
 		}
