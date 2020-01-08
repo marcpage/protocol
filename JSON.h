@@ -386,7 +386,7 @@ namespace json {
 			}
 		} else {
 			try {
-				*this= std::stoll(text.substr(start, offset - start), &after);
+				*this= static_cast<int64_t>(std::stoll(text.substr(start, offset - start), &after));
 			} catch(const std::exception &exception) {
 				throw WrongType(std::string("Illegal Number: ") + text.substr(start, offset - start), __FILE__, __LINE__);
 			}
