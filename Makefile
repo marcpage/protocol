@@ -6,9 +6,7 @@ lint:bin/logs/lint.txt
 
 OPENSSL_PATH=$(subst openssl=,-I,$(OS_OPTIONS))/include
 
-KNOWN_ERRORS:= --suppress=syntaxError:JSON.h:739 \
-				--suppress=unusedFunction \
-				--suppress=constParameter
+KNOWN_ERRORS:= --suppress=unusedFunction
 
 bin/logs/lint.txt: *.h
 	@mkdir -p bin/logs
