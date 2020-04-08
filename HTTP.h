@@ -21,7 +21,7 @@ namespace http {
 		public:
 			typedef std::string String;
 			Headers();
-			Headers(const String &text);
+			explicit Headers(const String &text);
 			Headers(const String &text, String::size_type &offset);
 			Headers(const Headers &other);
 			~Headers() {}
@@ -82,7 +82,7 @@ namespace http {
 		public:
 			typedef std::string String;
 			RequestLine();
-			RequestLine(const String &line);
+			explicit RequestLine(const String &line);
 			RequestLine(const String &line, String::size_type &after);
 			RequestLine(const RequestLine &other);
 			~RequestLine() {}
@@ -113,7 +113,7 @@ namespace http {
 			typedef std::string String;
 			ResponseLine();
 			ResponseLine(const ResponseLine &other);
-			ResponseLine(const String &line);
+			explicit ResponseLine(const String &line);
 			ResponseLine(const String &line, String::size_type &after);
 			~ResponseLine() {}
 			ResponseLine &operator=(const ResponseLine &other);
@@ -140,7 +140,7 @@ namespace http {
 		public:
 			typedef std::string String;
 			Message();
-			Message(const String &headers);
+			explicit Message(const String &headers);
 			Message(const String &headers, String::size_type &after);
 			Message(const Message &other);
 			~Message() {}
@@ -381,8 +381,8 @@ namespace http {
 					prefix = "&";
 				}
 			} else { // shouldn't happen. Any time a key is added, at least an empty value should be put in the list
-				result += prefix + escape(key->first);
-				prefix = "&";
+				result += prefix + escape(key->first); // no code coverage
+				prefix = "&"; // no code coverage
 			}
 		}
 		return result;
@@ -399,7 +399,7 @@ namespace http {
 		const StringList &found= get(name);
 
 		if (0 == found.size()) { // should never happen. Any time a key is added, at least an empty value should be put in the list
-			throw std::out_of_range(name);
+			throw std::out_of_range(name); // no code coverage
 		}
 		return found[0];
 	}
@@ -475,7 +475,6 @@ namespace http {
 	inline RequestLine::String::size_type RequestLine::_init(const String &line) {
 		String::size_type	start = 0;
 		String::size_type	end;
-		String				protocol;
 		String::size_type	queryPos;
 		String::size_type	slashPos;
 		String::size_type	lineEnd = line.find('\r');
@@ -565,7 +564,6 @@ namespace http {
 	inline ResponseLine::String::size_type ResponseLine::_init(const String &line) {
 		String::size_type	start = 0;
 		String::size_type	end;
-		String				protocol;
 		String::size_type	lineEnd = line.find('\r');
 		String::size_type	after;
 
@@ -600,7 +598,7 @@ namespace http {
 	/* Message */
 
 	template<typename HeaderLine>
-	inline Message<HeaderLine>::Message():_message(), _headers() {}
+	inline Message<HeaderLine>::Message():_message(), _headers() {} // no code coverage
 	template<typename HeaderLine>
 	inline Message<HeaderLine>::Message(const String &headers):_message(), _headers() {
 		String::size_type	offset= 0;

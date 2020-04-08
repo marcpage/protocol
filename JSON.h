@@ -37,7 +37,7 @@ namespace json {
 				}
 				return "Corrupt"; // Never hit in code coverage
 			}
-			WrongType(const std::string &message, const char *file= NULL, int line= 0) throw():msg::Exception(message, file, line) {}
+			explicit WrongType(const std::string &message, const char *file= NULL, int line= 0) throw():msg::Exception(message, file, line) {}
 			WrongType(Type expected, Type found, const char *file= NULL, int line= 0) throw():msg::Exception(std::string("Expected ") + name(expected) + " Found " + name(found), file, line) {}
 			WrongType(Type expected1, Type expected2, Type found, const char *file= NULL, int line= 0) throw():msg::Exception(std::string("Expected ") + name(expected1) + " or " + name(expected2) + " Found " + name(found), file, line) {}
 			WrongType(Type expected1, Type expected2, Type expected3, Type found, const char *file= NULL, int line= 0) throw():msg::Exception(std::string("Expected ") + name(expected1) + " " + name(expected2) + " or " + name(expected3) + " Found " + name(found), file, line) {}
@@ -48,7 +48,7 @@ namespace json {
 		public:
 			typedef std::vector<std::string> StringList;
 			Value(Type t=NullType):_value(_create(t)) {}
-			Value(const std::string &text):_value(NULL) {parse(text);}
+			explicit Value(const std::string &text):_value(NULL) {parse(text);}
 			Value(const Value &other):_value( (NULL == other._value) ? reinterpret_cast<Instance*>(NULL) : other._value->clone()) {}
 			~Value() {makeNull();}
 			Type type() const {return NULL == _value ? NullType : _value->type();}
@@ -98,11 +98,11 @@ namespace json {
 
 			class String : public Instance {
 				public:
-					String(const std::string &value):_value(value) {}
+					explicit String(const std::string &value):_value(value) {}
 					virtual ~String() {}
-					virtual Type type() const {return StringType;}
-					virtual Instance *clone() const {return new String(_value);}
-					virtual void format(std::string &buffer, int indent, int indentLevel) const;
+					Type type() const override {return StringType;}
+					Instance *clone() const override {return new String(_value);}
+					void format(std::string &buffer, int indent, int indentLevel) const override;
 					std::string &value() {return _value;}
 					const std::string &value() const {return _value;}
 					int count() const {return _value.length();}
@@ -116,11 +116,11 @@ namespace json {
 
 			class Integer : public Instance {
 				public:
-					Integer(int64_t value):_value(value) {}
+					explicit Integer(int64_t value):_value(value) {}
 					virtual ~Integer() {}
-					virtual Type type() const {return IntegerType;}
-					virtual Instance *clone() const {return new Integer(_value);}
-					virtual void format(std::string &buffer, int /*indent*/, int /*indentLevel*/) const {buffer= std::to_string(_value);}
+					Type type() const override {return IntegerType;}
+					Instance *clone() const override {return new Integer(_value);}
+					void format(std::string &buffer, int /*indent*/, int /*indentLevel*/) const override {buffer= std::to_string(_value);}
 					int64_t &value() {return _value;}
 					const int64_t &value() const {return _value;}
 				private:
@@ -131,11 +131,11 @@ namespace json {
 
 			class Real : public Instance {
 				public:
-					Real(double value):_value(value) {}
+					explicit Real(double value):_value(value) {}
 					virtual ~Real() {}
-					virtual Type type() const {return RealType;}
-					virtual Instance *clone() const {return new Real(_value);}
-					virtual void format(std::string &buffer, int /*indent*/, int /*indentLevel*/) const {buffer= std::to_string(_value);}
+					Type type() const override {return RealType;}
+					Instance *clone() const override {return new Real(_value);}
+					void format(std::string &buffer, int /*indent*/, int /*indentLevel*/) const override {buffer= std::to_string(_value);}
 					double &value() {return _value;}
 					const double &value() const {return _value;}
 				private:
@@ -146,11 +146,11 @@ namespace json {
 
 			class Boolean : public Instance {
 				public:
-					Boolean(bool value):_value(value) {}
+					explicit Boolean(bool value):_value(value) {}
 					virtual ~Boolean() {}
-					virtual Type type() const {return BooleanType;}
-					virtual Instance *clone() const {return new Boolean(_value);}
-					virtual void format(std::string &buffer, int /*indent*/, int /*indentLevel*/) const {buffer= _value ? "true" : "false";}
+					Type type() const override {return BooleanType;}
+					Instance *clone() const override {return new Boolean(_value);}
+					void format(std::string &buffer, int /*indent*/, int /*indentLevel*/) const override {buffer= _value ? "true" : "false";}
 					bool &value() {return _value;}
 					const bool &value() const {return _value;}
 				private:
@@ -163,9 +163,9 @@ namespace json {
 				public:
 					Array():_value() {}
 					virtual ~Array() {}
-					virtual Type type() const {return ArrayType;}
-					virtual Instance *clone() const;
-					virtual void format(std::string &buffer, int indent, int indentLevel) const;
+					Type type() const override {return ArrayType;}
+					Instance *clone() const override;
+					void format(std::string &buffer, int indent, int indentLevel) const override;
 					const Value &get(int index) const {return _value[index];}
 					Value &get(int index) {return _value[index];}
 					void clear() {_value.clear();}
@@ -182,9 +182,9 @@ namespace json {
 				public:
 					Object():_value() {}
 					virtual ~Object() {}
-					virtual Type type() const {return ObjectType;}
-					virtual Instance *clone() const;
-					virtual void format(std::string &buffer, int indent, int indentLevel) const;
+					Type type() const override {return ObjectType;}
+					Instance *clone() const override;
+					void format(std::string &buffer, int indent, int indentLevel) const override;
 					StringList keys() const;
 					const Value &get(const std::string &key) const;
 					Value &get(const std::string &key) {return _value[key];}
