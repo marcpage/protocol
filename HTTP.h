@@ -40,7 +40,9 @@ namespace http {
 				_Range():start(0), end(0) {}
 				_Range(String::size_type s, String::size_type e):start(s), end(e) {}
 				bool empty() {return start == end;}
-				String &value(const String &text, String &result) {result.assign(text, start, end - start);return result;}
+				String &value(const String &text, String &result) {
+					result.assign(text, start, end - start);return result;
+				}
 				void nextLine(const String &text);
 				_Range consumeKey(const String &text);
 				_Range trimmed(const String &text) const;
@@ -104,7 +106,8 @@ namespace http {
 			String	_protocol;
 			String	_version;
 			Query	_query;
-			String::size_type _find(bool whitespace, const String &text, String::size_type start, String::size_type end);
+			String::size_type _find(bool whitespace, const String &text,
+									String::size_type start, String::size_type end);
 			String::size_type _init(const String &line);
 	};
 
@@ -131,7 +134,8 @@ namespace http {
 			String	_version;
 			String	_code;
 			String	_message;
-			String::size_type _find(bool whitespace, const String &text, String::size_type start, String::size_type end);
+			String::size_type _find(bool whitespace, const String &text,
+									String::size_type start, String::size_type end);
 			String::size_type _init(const String &line);
 	};
 
@@ -169,7 +173,8 @@ namespace http {
 	}
 	inline Headers &Headers::operator=(const Headers &other) {
 		_headers.clear();
-		for (_Headers::const_iterator i= other._headers.begin(); i != other._headers.end(); ++i) {
+		for (_Headers::const_iterator i= other._headers.begin();
+					i != other._headers.end(); ++i) {
 			_headers[i->first] = i->second;
 		}
 		return *this;
