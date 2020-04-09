@@ -10,7 +10,7 @@
 		fprintf(stderr, "FAIL(%s:%d): %s\n",__FILE__, __LINE__, #condition); \
 	}
 
-void testHeaders() {
+void testHeaders(bool print) {
 	const char * const header1 =
 "Host: net.tutsplus.com\r\n"
 "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) \r\n"
@@ -86,7 +86,7 @@ void testHeaders() {
 	dotest(h1.has("Cache-Control"));
 	dotest(!h1.has("Body"));
 	dotest(h1["User-Agent"].find("Gecko") > 0);
-	printf("Header 1\n----------\n%s\n----------\n", std::string(h1).c_str());
+	if (print) printf("Header 1\n----------\n%s\n----------\n", std::string(h1).c_str());
 
 	dotest(!h2.empty());
 	dotest(h2.has("Host"));
@@ -102,7 +102,7 @@ void testHeaders() {
 	dotest(h2.has("Cache-Control"));
 	dotest(!h2.has("Body"));
 	dotest(h2["User-Agent"].find("Gecko") > 0);
-	printf("Header 2\n----------\n%s\n----------\n", std::string(h2).c_str());
+	if (print) printf("Header 2\n----------\n%s\n----------\n", std::string(h2).c_str());
 
 	dotest(!h3.empty());
 	dotest(h3.has("Host"));
@@ -118,7 +118,7 @@ void testHeaders() {
 	dotest(h3.has("Cache-Control"));
 	dotest(!h3.has("Body"));
 	dotest(h3["User-Agent"].find("Gecko") > 0);
-	printf("Header 3\n----------\n%s\n----------\n", std::string(h3).c_str());
+	if (print) printf("Header 3\n----------\n%s\n----------\n", std::string(h3).c_str());
 
 	dotest(!h4.empty());
 	dotest(h4.has("Host"));
@@ -134,7 +134,7 @@ void testHeaders() {
 	dotest(h4.has("Cache-Control"));
 	dotest(!h4.has("Body"));
 	dotest(h4["User-Agent"].find("Gecko") > 0);
-	printf("Header 4\n----------\n%s\n----------\n", std::string(h4).c_str());
+	if (print) printf("Header 4\n----------\n%s\n----------\n", std::string(h4).c_str());
 
 	dotest(h5.empty());
 	h4.remove("Host");
@@ -165,11 +165,11 @@ void testHeaders() {
 	h3 = h2;
 	dotest(h3.has("Cookie"));
 
-	fprintf(stderr, "expected\n--------\n%s\n---------\nproduced\n---------\n%s\n--------\n", "Accept: None\r\n\r\n", std::string(http::Headers("Accept: None\r\n\r\n")).c_str());
+	if (print) fprintf(stderr, "expected\n--------\n%s\n---------\nproduced\n---------\n%s\n--------\n", "Accept: None\r\n\r\n", std::string(http::Headers("Accept: None\r\n\r\n")).c_str());
 	dotest(std::string(http::Headers("Accept: None\r\n\r\n")) == "Accept: None\r\n\r\n");
 }
 
-void testQuery() {
+void testQuery(bool print) {
 	http::Query test1;
 	http::Query test2;
 	http::Query test4("key4", http::Query::IsQuery);
@@ -184,13 +184,13 @@ void testQuery() {
 		test5.getOne("This Key Does Not Exist");
 		dotest(false);
 	} catch(const std::out_of_range &exception) {
-		printf("Expected exception: %s\n", exception.what());
+		if (print) printf("Expected exception: %s\n", exception.what());
 	}
 	dotest(test5.has("help"));
-	printf("test5: '%s'\n", std::string(test5).c_str());
+	if (print) printf("test5: '%s'\n", std::string(test5).c_str());
 	dotest(!test5.hasValue("help"));
 	dotest(query5 == std::string(test5));
-	printf("query5 = '%s' test5 = '%s'\n", query5.c_str(), ((std::string)test5).c_str());
+	if (print) printf("query5 = '%s' test5 = '%s'\n", query5.c_str(), ((std::string)test5).c_str());
 	test1["key1"] = "value1";
 	test2["key2"] = "value2";
 	dotest(std::string(test1) == "?key1=value1");
@@ -271,14 +271,14 @@ void testRequestLine() {
 	}
 }
 
-void testRequest() {
+void testRequest(bool print) {
 	const char * const fullRequestRaw= "PUT /index.html?key=value HTTPS/1.2\r\n"
 										"Agent: Protocol\r\n"
 										"\r\n";
 	http::Request	fullRequest(fullRequestRaw);
 	http::Request	requestCopy(fullRequest);
 
-	printf("-=- raw -=-\n%s\n-=- processed -=-\n%s\n", fullRequestRaw, std::string(fullRequest).c_str());
+	if (print) printf("-=- raw -=-\n%s\n-=- processed -=-\n%s\n", fullRequestRaw, std::string(fullRequest).c_str());
 	dotest(std::string(fullRequest) == fullRequestRaw);
 	fullRequest.info().method()= "GET";
 	fullRequest.fields()["Agent"]= "Testing";
@@ -287,9 +287,9 @@ void testRequest() {
 	dotest(std::string(fullRequest) == fullRequestRaw);
 }
 
-void testResponseLine() {
-	fprintf(stderr, "protocol='%s'\n", http::ResponseLine("FTP/5.1 200 OK\r\n").protocol().c_str());
-	fprintf(stderr, "version='%s'\n", http::ResponseLine("FTP/5.1 200 OK\r\n").version().c_str());
+void testResponseLine(bool print) {
+	if (print) fprintf(stderr, "protocol='%s'\n", http::ResponseLine("FTP/5.1 200 OK\r\n").protocol().c_str());
+	if (print) fprintf(stderr, "version='%s'\n", http::ResponseLine("FTP/5.1 200 OK\r\n").version().c_str());
 	dotest(http::ResponseLine("FTP/5.1 200 OK\r\n").protocol() == "FTP");
 	dotest(http::ResponseLine("FTP/5.1 200 OK\r\n").version() == "5.1");
 	dotest(http::ResponseLine("FTP/5.1 200 OK\r\n").code() == "200");
@@ -308,7 +308,7 @@ void testResponseLine() {
 	dotest(http::ResponseLine("FTP/5.1 200 OK").message() == "OK");
 	dotest(http::ResponseLine("FTP").protocol() == "FTP");
 	dotest(http::ResponseLine().protocol() == "HTTP");
-	printf("empty response line protocol = '%s'\n", http::ResponseLine().protocol().c_str());
+	if (print) printf("empty response line protocol = '%s'\n", http::ResponseLine().protocol().c_str());
 
 	http::ResponseLine response;
 
@@ -319,16 +319,16 @@ void testResponseLine() {
 	dotest(std::string(response) == "HTTPS/3.1 301 Moved Permanently");
 }
 
-void testResponse() {
+void testResponse(bool print) {
 	const char * const fullResponseRaw= "HTTPS/1.9 200 OK\r\n"
 										"Agent: Protocol\r\n"
 										"\r\n";
 	http::Response	fullResponse(fullResponseRaw);
 	http::Response	responseCopy(fullResponse);
 
-	printf("-=- raw response -=-\n%s\n-=- processed response -=-\n%s\n", fullResponseRaw, std::string(fullResponse).c_str());
-	printf("-=- processed line -=-\n%s\n", std::string(fullResponse.info()).c_str());
-	printf("-=- processed line message -=-\n%s\n", std::string(fullResponse.info().message()).c_str());
+	if (print) printf("-=- raw response -=-\n%s\n-=- processed response -=-\n%s\n", fullResponseRaw, std::string(fullResponse).c_str());
+	if (print) printf("-=- processed line -=-\n%s\n", std::string(fullResponse.info()).c_str());
+	if (print) printf("-=- processed line message -=-\n%s\n", std::string(fullResponse.info().message()).c_str());
 	dotest(std::string(fullResponse) == fullResponseRaw);
 	fullResponse.info().protocol()= "FTP";
 	fullResponse.fields()["Agent"]= "Testing";
@@ -414,12 +414,12 @@ int main(int argc, char * /*argv*/[]) {
 	}
 	for(int i= 0; i < iterations; ++i) {
 		try {
-			testHeaders();
-			testQuery();
+			testHeaders(0 == i);
+			testQuery(0 == i);
 			testRequestLine();
-			testRequest();
-			testResponseLine();
-			testResponse();
+			testRequest(0 == i);
+			testResponseLine(0 == i);
+			testResponse(0 == i);
 		} catch(const std::exception &exception) {
 			fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
 		}
