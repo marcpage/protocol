@@ -9,8 +9,9 @@ OPENSSL_PATH=$(subst openssl=,-I,$(OS_OPTIONS))/include
 KNOWN_ERRORS:= --suppress=unusedFunction
 
 bin/logs/lint.txt: *.h
+	@echo Linting ...
 	@mkdir -p bin/logs
-	@cppcheck --enable=all --force --std=c++11 $(KNOWN_ERRORS) --language=c++ $(OPENSSL_PATH) -I/usr/include -I.. *.h &> $@
+	@cppcheck --enable=all --force --std=c++11 $(KNOWN_ERRORS) --language=c++ $(OPENSSL_PATH) -I.. *.h &> $@
 	@-cat $@ | grep performance: || true
 	@-cat $@ | grep portability: || true
 	@-cat $@ | grep style: || true
