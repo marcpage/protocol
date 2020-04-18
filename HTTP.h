@@ -333,7 +333,7 @@ inline Query::Query(const String &query, SearchMode mode) : _keyValues() {
       String::size_type equalsPos = query.find('=', position);
       String::size_type keyEndPos =
           equalsPos == positionEnd
-              ? positionEnd
+              ? positionEnd // not tested
               : (equalsPos > positionEnd ? positionEnd : equalsPos);
       String key = unescape(query.substr(position, keyEndPos - position));
       String value = keyEndPos < positionEnd
