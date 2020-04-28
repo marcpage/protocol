@@ -159,6 +159,7 @@ private:
     void format(std::string &buffer, int indent,
                 int indentLevel) const override;
     std::string &value() { return _value; }
+	/// @todo test
     const std::string &value() const { return _value; }
     int count() const { return _value.length(); }
     void clear() { _value.clear(); }
@@ -185,6 +186,7 @@ private:
       buffer = std::to_string(_value);
     }
     int64_t &value() { return _value; }
+	/// @todo test
     const int64_t &value() const { return _value; }
 
   private:
@@ -204,6 +206,7 @@ private:
       buffer = std::to_string(_value);
     }
     double &value() { return _value; }
+	/// @todo test
     const double &value() const { return _value; }
 
   private:
@@ -223,6 +226,7 @@ private:
       buffer = _value ? "true" : "false";
     }
     bool &value() { return _value; }
+	/// @todo test
     const bool &value() const { return _value; }
 
   private:
@@ -239,6 +243,7 @@ private:
     Instance *clone() const override;
     void format(std::string &buffer, int indent,
                 int indentLevel) const override;
+	/// @todo test
     const Value &get(int index) const { return _value[index]; }
     Value &get(int index) { return _value[index]; }
     void clear() { _value.clear(); }
@@ -711,6 +716,7 @@ inline int Value::count() const {
   }
   return 0;
 }
+/// @todo test
 inline Value::StringList Value::keys() const {
   CheckType(type(), ObjectType);
   return reinterpret_cast<Object *>(_value)->keys();
@@ -864,6 +870,7 @@ inline Value &Value::operator[](int index) {
   CheckType(type(), ArrayType);
   return reinterpret_cast<Array *>(_value)->get(index);
 }
+/// @todo test
 inline const Value &Value::operator[](int index) const {
   CheckType(type(), ArrayType);
   return reinterpret_cast<const Array *>(_value)->get(index);
@@ -876,6 +883,7 @@ inline Value &Value::operator[](const std::string &key) {
   CheckType(type(), ObjectType);
   return reinterpret_cast<Object *>(_value)->get(key);
 }
+/// @todo test
 inline const Value &Value::operator[](const std::string &key) const {
   CheckType(type(), ObjectType);
   return reinterpret_cast<const Object *>(_value)->get(key);
@@ -1006,6 +1014,7 @@ inline void Value::Object::format(std::string &buffer, int indent,
   }
   buffer += lastLinePrefix + "}";
 }
+/// @todo test
 inline Value::StringList Value::Object::keys() const {
   StringList keys;
 
@@ -1015,6 +1024,7 @@ inline Value::StringList Value::Object::keys() const {
   }
   return keys;
 }
+/// @todo test
 inline const Value &Value::Object::get(const std::string &key) const {
   std::map<std::string, Value>::const_iterator found = _value.find(key);
 
