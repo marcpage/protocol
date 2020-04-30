@@ -159,7 +159,7 @@ private:
     void format(std::string &buffer, int indent,
                 int indentLevel) const override;
     std::string &value() { return _value; }
-	/// @todo test
+    /// @todo test
     const std::string &value() const { return _value; }
     int count() const { return _value.length(); }
     void clear() { _value.clear(); }
@@ -186,7 +186,7 @@ private:
       buffer = std::to_string(_value);
     }
     int64_t &value() { return _value; }
-	/// @todo test
+    /// @todo test
     const int64_t &value() const { return _value; }
 
   private:
@@ -206,7 +206,7 @@ private:
       buffer = std::to_string(_value);
     }
     double &value() { return _value; }
-	/// @todo test
+    /// @todo test
     const double &value() const { return _value; }
 
   private:
@@ -226,7 +226,7 @@ private:
       buffer = _value ? "true" : "false";
     }
     bool &value() { return _value; }
-	/// @todo test
+    /// @todo test
     const bool &value() const { return _value; }
 
   private:
@@ -243,7 +243,7 @@ private:
     Instance *clone() const override;
     void format(std::string &buffer, int indent,
                 int indentLevel) const override;
-	/// @todo test
+    /// @todo test
     const Value &get(int index) const { return _value[index]; }
     Value &get(int index) { return _value[index]; }
     void clear() { _value.clear(); }
