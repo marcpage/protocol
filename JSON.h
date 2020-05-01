@@ -111,6 +111,7 @@ public:
     return *this;
   }
   Value &append(const Value &value);
+  Value &insert(const Value &value, int beforeIndex);
   std::string &format(std::string &buffer, int indent = -1,
                       int indentLevel = 0) const;
   std::string format(int indent = -1, int indentLevel = 0) const;
@@ -252,6 +253,10 @@ private:
     }
     int count() const { return _value.size(); }
     void append(const Value &value) { _value.push_back(value); }
+    /// @todo Test
+    void insert(const Value &value, int beforeIndex) {
+      _value.insert(_value.begin() + beforeIndex, value);
+    }
 
   private:
     std::vector<Value> _value;
@@ -807,6 +812,16 @@ inline Value &Value::append(const Value &value) {
 
   CheckType(type(), ArrayType);
   reinterpret_cast<Array *>(_value)->append(value);
+  return *this;
+}
+/// @todo Test
+inline Value &Value::insert(const Value &value, int beforeIndex) {
+  if (is(NullType)) {
+    makeArray();
+  }
+
+  CheckType(type(), ArrayType);
+  reinterpret_cast<Array *>(_value)->insert(value, beforeIndex);
   return *this;
 }
 inline std::string &Value::format(std::string &buffer, int indent,
