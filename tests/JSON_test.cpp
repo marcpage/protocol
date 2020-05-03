@@ -7,6 +7,25 @@
     fprintf(stderr, "FAIL(%s:%d): %s\n", __FILE__, __LINE__, #condition);      \
   }
 
+void testConstArray(const json::Value &array, int index,
+                    const json::Value &value) {
+  dotest(array[index] == value);
+}
+
+void testConstObject(const json::Value &object, const std::string &key,
+                     const json::Value &value) {
+  auto list = object.keys();
+  bool found = false;
+
+  for (auto i = list.begin(); i != list.end(); ++i) {
+    if (*i == key) {
+      found = true;
+    }
+  }
+  dotest(found);
+  dotest(object[key] == value);
+}
+
 int main(int /*argc*/, char * /*argv*/[]) {
   int iterations = 350;
 #ifdef __Tracer_h__
@@ -63,6 +82,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
       dotest(test6.is(json::ObjectType));
       dotest(test6["test"].is(json::StringType));
       dotest(test6["test"].string() == "me");
+      testConstObject(test6, "test", json::Value() = "me");
 
       json::Value test7;
       test7.erase("key");
@@ -77,7 +97,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
       dotest(test9.is(json::ArrayType));
       dotest(test9.count() == 1);
       dotest(test9[0].string() == "me");
-
+      testConstArray(test9, 0, json::Value() = "me");
       try {
         json::Value().parse(j1)["test \"me\""][0].count();
         dotest(false);
@@ -223,7 +243,9 @@ int main(int /*argc*/, char * /*argv*/[]) {
              std::string(json2).c_str());
       dotest(::fabs(json2["real"].real() - 3.14159265) < 0.0000001);
       dotest(json2["true"].boolean());
+      testConstObject(json2, "true", json::Value() = true);
       dotest(!json2["false"].boolean());
+      testConstObject(json2, "false", json::Value() = false);
       dotest(json2["array"].count() == 5);
       dotest(json2["array"][0].integer() == 1);
       dotest(json2["array"][1].integer() == 2);
@@ -399,6 +421,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
       test2["list"].makeArray();
       test2["list"].append(json::Value("\"Test \\\"me\\\"\""));
       test2["number"] = 1;
+      testConstObject(test2, "number", json::Value() = 1);
       test2["boolean"] = true;
       test2["null"];
       test3.makeObject()["inner"] = std::string(test2);
@@ -436,6 +459,10 @@ int main(int /*argc*/, char * /*argv*/[]) {
       printf("-=- original -=-\n'%s'\n-=- parsed -=-\n'%s'\n", j4.c_str(),
              std::string(json::Value().parse(j4)).c_str());
 
+      json::Value o1(json::ObjectType);
+
+      o1["real"] = 0.0;
+      testConstObject(o1, "real", json::Value() = 0.0);
     } catch (const std::exception &exception) {
       fprintf(stderr, "FAILED: Exception: %s\n", exception.what());
     }

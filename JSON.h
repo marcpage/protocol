@@ -135,6 +135,7 @@ public:
   const Value &operator[](int index) const;
   Value &operator[](const std::string &key);
   const Value &operator[](const std::string &key) const;
+  bool operator==(const Value &other) const;
 
 private:
   class Instance {
@@ -145,6 +146,7 @@ private:
     virtual Instance *clone() const = 0;
     virtual void format(std::string &buffer, int indent,
                         int indentLevel) const = 0;
+    virtual bool operator==(const Instance &other) const = 0;
 
   private:
     Instance(const Instance &);
@@ -159,8 +161,13 @@ private:
     Instance *clone() const override { return new String(_value); }
     void format(std::string &buffer, int indent,
                 int indentLevel) const override;
+    bool operator==(const Instance &other) const override {
+      if (type() != other.type()) {
+        return false;
+      }
+      return reinterpret_cast<const String *>(&other)->value() == value();
+    }
     std::string &value() { return _value; }
-    /// @todo test
     const std::string &value() const { return _value; }
     int count() const { return _value.length(); }
     void clear() { _value.clear(); }
@@ -186,8 +193,13 @@ private:
                 int /*indentLevel*/) const override {
       buffer = std::to_string(_value);
     }
+    bool operator==(const Instance &other) const override {
+      if (type() != other.type()) {
+        return false;
+      }
+      return reinterpret_cast<const Integer *>(&other)->value() == value();
+    }
     int64_t &value() { return _value; }
-    /// @todo test
     const int64_t &value() const { return _value; }
 
   private:
@@ -206,8 +218,13 @@ private:
                 int /*indentLevel*/) const override {
       buffer = std::to_string(_value);
     }
+    bool operator==(const Instance &other) const override {
+      if (type() != other.type()) {
+        return false;
+      }
+      return reinterpret_cast<const Real *>(&other)->value() == value();
+    }
     double &value() { return _value; }
-    /// @todo test
     const double &value() const { return _value; }
 
   private:
@@ -226,8 +243,13 @@ private:
                 int /*indentLevel*/) const override {
       buffer = _value ? "true" : "false";
     }
+    bool operator==(const Instance &other) const override {
+      if (type() != other.type()) {
+        return false;
+      }
+      return reinterpret_cast<const Boolean *>(&other)->value() == value();
+    }
     bool &value() { return _value; }
-    /// @todo test
     const bool &value() const { return _value; }
 
   private:
@@ -244,7 +266,7 @@ private:
     Instance *clone() const override;
     void format(std::string &buffer, int indent,
                 int indentLevel) const override;
-    /// @todo test
+    bool operator==(const Instance &other) const override;
     const Value &get(int index) const { return _value[index]; }
     Value &get(int index) { return _value[index]; }
     void clear() { _value.clear(); }
@@ -272,6 +294,7 @@ private:
     Instance *clone() const override;
     void format(std::string &buffer, int indent,
                 int indentLevel) const override;
+    bool operator==(const Instance &other) const override;
     StringList keys() const;
     const Value &get(const std::string &key) const;
     Value &get(const std::string &key) { return _value[key]; }
@@ -721,7 +744,6 @@ inline int Value::count() const {
   }
   return 0;
 }
-/// @todo test
 inline Value::StringList Value::keys() const {
   CheckType(type(), ObjectType);
   return reinterpret_cast<Object *>(_value)->keys();
@@ -885,7 +907,6 @@ inline Value &Value::operator[](int index) {
   CheckType(type(), ArrayType);
   return reinterpret_cast<Array *>(_value)->get(index);
 }
-/// @todo test
 inline const Value &Value::operator[](int index) const {
   CheckType(type(), ArrayType);
   return reinterpret_cast<const Array *>(_value)->get(index);
@@ -898,7 +919,15 @@ inline Value &Value::operator[](const std::string &key) {
   CheckType(type(), ObjectType);
   return reinterpret_cast<Object *>(_value)->get(key);
 }
-/// @todo test
+bool Value::operator==(const Value &other) const {
+  if (_value == other._value) {
+    return true;
+  }
+  if ((nullptr == _value) || (nullptr == other._value)) {
+    return false;
+  }
+  return *_value == *other._value;
+}
 inline const Value &Value::operator[](const std::string &key) const {
   CheckType(type(), ObjectType);
   return reinterpret_cast<const Object *>(_value)->get(key);
@@ -994,6 +1023,26 @@ inline void Value::Array::format(std::string &buffer, int indent,
   buffer += lastLinePrefix + "]";
 }
 
+inline bool Value::Array::operator==(const Instance &other) const {
+  if (type() != other.type()) {
+    return false;
+  }
+
+  const Array *array = reinterpret_cast<const Array *>(&other);
+
+  if (_value.size() != array->_value.size()) {
+    return false;
+  }
+
+  for (auto i = _value.begin(), j = array->_value.begin(); i != _value.end();
+       ++i, ++j) {
+    if (!(*i == *j)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 inline Value::Instance *Value::Object::clone() const {
   Object *value = new Object();
 
@@ -1029,7 +1078,29 @@ inline void Value::Object::format(std::string &buffer, int indent,
   }
   buffer += lastLinePrefix + "}";
 }
-/// @todo test
+
+inline bool Value::Object::operator==(const Instance &other) const {
+  if (type() != other.type()) {
+    return false;
+  }
+  const Object *object = reinterpret_cast<const Object *>(&other);
+
+  if (_value.size() != object->_value.size()) {
+    return false;
+  }
+
+  for (auto i = _value.begin(); i != _value.end(); ++i) {
+    if (!object->has(i->first)) {
+      return false;
+    }
+
+    if (!(get(i->first) == object->get(i->first))) {
+      return false;
+    }
+  }
+  return true;
+}
+
 inline Value::StringList Value::Object::keys() const {
   StringList keys;
 
@@ -1039,7 +1110,6 @@ inline Value::StringList Value::Object::keys() const {
   }
   return keys;
 }
-/// @todo test
 inline const Value &Value::Object::get(const std::string &key) const {
   std::map<std::string, Value>::const_iterator found = _value.find(key);
 
