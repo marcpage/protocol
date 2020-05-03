@@ -169,7 +169,6 @@ private:
 
 inline Headers::Headers() : _headers() {}
 inline Headers::Headers(const String &text) : _headers() { _init(text); }
-/// @todo test
 inline Headers::Headers(const String &text, String::size_type &offset)
     : _headers() {
   offset = _init(text);
@@ -192,12 +191,11 @@ inline Headers::operator String() const {
   }
   return results + "\r\n";
 }
-/// @todo test
 inline const Headers::String &Headers::operator[](const String &name) const {
   _Headers::const_iterator found = _headers.find(name);
 
   if (found == _headers.end()) {
-    throw std::out_of_range(name);
+    throw std::out_of_range(name); // no code coverage
   }
   return found->second;
 }
@@ -335,7 +333,7 @@ inline Query::Query(const String &query, SearchMode mode) : _keyValues() {
       String::size_type equalsPos = query.find('=', position);
       String::size_type keyEndPos =
           equalsPos == positionEnd
-              ? positionEnd // not tested
+              ? positionEnd // no code coverage
               : (equalsPos > positionEnd ? positionEnd : equalsPos);
       String key = unescape(query.substr(position, keyEndPos - position));
       String value = keyEndPos < positionEnd
@@ -363,7 +361,6 @@ inline Query &Query::operator=(const Query &other) {
   }
   return *this;
 }
-/// @todo test
 inline const Query::String &Query::operator[](const String &name) const {
   return getOne(name);
 }
@@ -426,9 +423,7 @@ inline const Query::String &Query::getOne(const String &name) const {
   }
   return found[0];
 }
-/// @todo test
 inline void Query::remove(const String &name) { _keyValues.erase(name); }
-/// @todo test
 inline void Query::add(const String &name, const String &value) {
   _keyValues[name].push_back(value);
 }
@@ -463,13 +458,10 @@ inline RequestLine::operator String() const {
 inline const RequestLine::String &RequestLine::method() const {
   return _method;
 }
-/// @todo test
 inline const RequestLine::String &RequestLine::path() const { return _path; }
-/// @todo Test
 inline const RequestLine::String &RequestLine::protocol() const {
   return _protocol;
 }
-/// @todo Test
 inline const RequestLine::String &RequestLine::version() const {
   return _version;
 }
@@ -555,15 +547,12 @@ inline ResponseLine &ResponseLine::operator=(const ResponseLine &other) {
 inline ResponseLine::operator String() const {
   return _protocol + "/" + _version + " " + _code + " " + _message;
 }
-/// @todo Test
 inline const ResponseLine::String &ResponseLine::protocol() const {
   return _protocol;
 }
-/// @todo Test
 inline const ResponseLine::String &ResponseLine::version() const {
   return _version;
 }
-/// @todo Test
 inline const ResponseLine::String &ResponseLine::code() const { return _code; }
 inline const ResponseLine::String &ResponseLine::message() const {
   return _message;

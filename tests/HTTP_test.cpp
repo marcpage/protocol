@@ -10,9 +10,14 @@
     fprintf(stderr, "FAIL(%s:%d): %s\n", __FILE__, __LINE__, #condition);      \
   }
 
+void testConstHeaders(const http::Headers &h, const std::string &name,
+                      const std::string &value) {
+  dotest(h[name] == value);
+}
+
 void testHeaders(bool print) {
   const char *const header1 =
-      "Host: net.tutsplus.com\r\n"
+      "Host: net1.tutsplus.com\r\n"
       "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) "
       "\r\n"
       "\tGecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)\r\n"
@@ -29,7 +34,7 @@ void testHeaders(bool print) {
       "\r\n"
       "Body: text\r\n";
   const char *const header2 =
-      "Host: net.tutsplus.com\n"
+      "Host: net2.tutsplus.com\n"
       "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) "
       "\n"
       "\tGecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)\n"
@@ -46,7 +51,7 @@ void testHeaders(bool print) {
       "\n"
       "Body: text\n";
   const char *const header3 =
-      "Host: net.tutsplus.com\r"
+      "Host: net3.tutsplus.com\r"
       "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) "
       "\r"
       "\tGecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)\r"
@@ -63,7 +68,7 @@ void testHeaders(bool print) {
       "\r"
       "Body: text\r";
   const char *const header6 =
-      "Host: net.tutsplus.com\r"
+      "Host: net4.tutsplus.com\r"
       "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) "
       "\r"
       "\tGecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)\r"
@@ -79,6 +84,28 @@ void testHeaders(bool print) {
   http::Headers h4(h1);
   http::Headers h5;
   http::Headers h6(header6);
+  std::string headers =
+      std::string(header1) + "\n" + header2 + "\n" + header3 + "\n\n" + header6;
+  http::Headers::String::size_type offset = 0;
+
+  testConstHeaders(http::Headers(headers, offset), "Host", "net1.tutsplus.com");
+  headers.erase(0, offset);
+  testConstHeaders(http::Headers(headers, offset), "Body", "text");
+  headers.erase(0, offset);
+
+  testConstHeaders(http::Headers(headers, offset), "Host", "net2.tutsplus.com");
+  headers.erase(0, offset);
+  testConstHeaders(http::Headers(headers, offset), "Body", "text");
+  headers.erase(0, offset);
+
+  testConstHeaders(http::Headers(headers, offset), "Host", "net3.tutsplus.com");
+  headers.erase(0, offset);
+  testConstHeaders(http::Headers(headers, offset), "Body", "text");
+  headers.erase(0, offset);
+
+  testConstHeaders(http::Headers(headers, offset), "Host", "net4.tutsplus.com");
+  headers.erase(0, offset);
+  dotest(headers.size() == 0);
 
   dotest(!h1.empty());
   dotest(h1.has("Host"));
@@ -187,6 +214,11 @@ void testHeaders(bool print) {
          "Accept: None\r\n\r\n");
 }
 
+void testConstQuery(const http::Query &q, const std::string &name,
+                    const std::string &value) {
+  dotest(q[name] == value);
+}
+
 void testQuery(bool print) {
   http::Query test1;
   http::Query test2;
@@ -217,6 +249,8 @@ void testQuery(bool print) {
   test2["key2"] = "value2";
   dotest(std::string(test1) == "?key1=value1");
   dotest(std::string(test2) == "?key2=value2");
+  testConstQuery(test1, "key1", "value1");
+  testConstQuery(test2, "key2", "value2");
   test2 = test1;
   dotest(std::string(test2) == "?key1=value1");
 
@@ -277,9 +311,27 @@ void testQuery(bool print) {
          "?key");
   dotest(std::string(http::Query("key#hammerTime",
                                  http::Query::SearchForQuery)) == "?key");
+  test1.remove("key1");
+  dotest(test1["key1"] == "");
+  test1.remove("key1");
+  test1.add("key1", "value");
+  printf("***** key1 = %s\n", test1["key1"].c_str());
+  dotest(test1["key1"] == "value");
+}
+
+void testConstRequestLine(const http::RequestLine &rl,
+                          const std::string &method, const std::string &path,
+                          const std::string &version,
+                          const std::string &protocol) {
+  dotest(rl.path() == path);
+  dotest(rl.protocol() == protocol);
+  dotest(rl.version() == version);
+  dotest(rl.method() == method);
 }
 
 void testRequestLine() {
+  testConstRequestLine(http::RequestLine("GET /docs/index.html HTTP/1.1"),
+                       "GET", "/docs/index.html", "1.1", "HTTP");
   dotest(http::RequestLine("GET /docs/index.html HTTP/1.1").method() == "GET");
   dotest(http::RequestLine("GET /docs/index.html HTTP/1.1").path() ==
          "/docs/index.html");
@@ -327,6 +379,16 @@ void testRequest(bool print) {
   dotest(std::string(fullRequest) == fullRequestRaw);
 }
 
+void testConstResponseLine(const http::ResponseLine &rl,
+                           const std::string &protocol,
+                           const std::string &version, const std::string &code,
+                           const std::string &message) {
+  dotest(rl.protocol() == protocol);
+  dotest(rl.version() == version);
+  dotest(rl.code() == code);
+  dotest(rl.message() == message);
+}
+
 void testResponseLine(bool print) {
   if (print)
     fprintf(stderr, "protocol='%s'\n",
@@ -334,6 +396,8 @@ void testResponseLine(bool print) {
   if (print)
     fprintf(stderr, "version='%s'\n",
             http::ResponseLine("FTP/5.1 200 OK\r\n").version().c_str());
+  testConstResponseLine(http::ResponseLine("FTP/5.1 200 OK\r\n"), "FTP", "5.1",
+                        "200", "OK");
   dotest(http::ResponseLine("FTP/5.1 200 OK\r\n").protocol() == "FTP");
   dotest(http::ResponseLine("FTP/5.1 200 OK\r\n").version() == "5.1");
   dotest(http::ResponseLine("FTP/5.1 200 OK\r\n").code() == "200");
