@@ -174,18 +174,16 @@ inline Headers::Headers(const String &text, String::size_type &offset)
 inline Headers::Headers(const Headers &other) : _headers() { *this = other; }
 inline Headers &Headers::operator=(const Headers &other) {
   _headers.clear();
-  for (_Headers::const_iterator i = other._headers.begin();
-       i != other._headers.end(); ++i) {
-    _headers[i->first] = i->second;
+  for (auto i : other._headers) {
+    _headers[i.first] = i.second;
   }
   return *this;
 }
 inline Headers::operator String() const {
   String results("");
 
-  for (_Headers::const_iterator i = _headers.begin(); i != _headers.end();
-       ++i) {
-    results += i->first + ": " + i->second + "\r\n";
+  for (auto i : _headers) {
+    results += i.first + ": " + i.second + "\r\n";
   }
   return results + "\r\n";
 }
@@ -362,11 +360,9 @@ inline Query::Query(const Query &other) : _keyValues() { *this = other; }
 inline Query &Query::operator=(const Query &other) {
   _keyValues.clear();
   if (this != &other) {
-    for (_KeyValues::const_iterator key = other._keyValues.begin();
-         key != other._keyValues.end(); ++key) {
-      for (StringList::const_iterator value = key->second.begin();
-           value != key->second.end(); ++value) {
-        _keyValues[key->first].push_back(*value);
+    for (auto key : other._keyValues) {
+      for (auto value : key.second) {
+        _keyValues[key.first].push_back(value);
       }
     }
   }
@@ -397,22 +393,20 @@ inline Query::operator String() const {
   String result = empty() ? "" : "?";
   String prefix = "";
 
-  for (_KeyValues::const_iterator key = _keyValues.begin();
-       key != _keyValues.end(); ++key) {
-    if (key->second.size() > 0) {
-      for (StringList::const_iterator value = key->second.begin();
-           value != key->second.end(); ++value) {
-        result += prefix + escape(key->first);
-        if (value->length() > 0) {
-          result += "=" + escape(*value);
+  for (auto key : _keyValues) {
+    if (key.second.size() > 0) {
+      for (auto value : key.second) {
+        result += prefix + escape(key.first);
+        if (value.length() > 0) {
+          result += "=" + escape(value);
         } else {
         }
         prefix = "&";
       }
     } else { // shouldn't happen. Any time a key is added, at least an empty
              // value should be put in the list
-      result += prefix + escape(key->first); // no code coverage
-      prefix = "&";                          // no code coverage
+      result += prefix + escape(key.first); // no code coverage
+      prefix = "&";                         // no code coverage
     }
   }
   return result;

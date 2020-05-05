@@ -993,9 +993,8 @@ inline void Value::String::format(std::string &buffer, int /*indent*/,
 inline Value::Instance *Value::Array::clone() const {
   Array *value = new Array();
 
-  for (std::vector<Value>::const_iterator i = _value.begin(); i != _value.end();
-       ++i) {
-    value->append(*i);
+  for (auto i : _value) {
+    value->append(i);
   }
   return value;
 }
@@ -1046,9 +1045,8 @@ inline bool Value::Array::operator==(const Instance &other) const {
 inline Value::Instance *Value::Object::clone() const {
   Object *value = new Object();
 
-  for (std::map<std::string, Value>::const_iterator i = _value.begin();
-       i != _value.end(); ++i) {
-    value->get(i->first) = i->second;
+  for (auto i : _value) {
+    value->get(i.first) = i.second;
   }
   return value;
 }
@@ -1067,12 +1065,11 @@ inline void Value::Object::format(std::string &buffer, int indent,
     lastLinePrefix.assign(indent * indentLevel, ' ');
   }
   buffer = "{" + lineSuffix;
-  for (std::map<std::string, Value>::const_iterator i = _value.begin();
-       i != _value.end(); ++i) {
+  for (auto i : _value) {
     itemsLeft -= 1;
-    key = i->first;
+    key = i.first;
     key.format(keyStr, indent, indentLevel + 1);
-    i->second.format(value, indent, indentLevel + 1);
+    i.second.format(value, indent, indentLevel + 1);
     buffer += linePrefix + keyStr + ":" + value + (itemsLeft == 0 ? "" : ",") +
               lineSuffix;
   }
@@ -1089,12 +1086,12 @@ inline bool Value::Object::operator==(const Instance &other) const {
     return false;
   }
 
-  for (auto i = _value.begin(); i != _value.end(); ++i) {
-    if (!object->has(i->first)) {
+  for (auto i : _value) {
+    if (!object->has(i.first)) {
       return false;
     }
 
-    if (!(get(i->first) == object->get(i->first))) {
+    if (!(get(i.first) == object->get(i.first))) {
       return false;
     }
   }
@@ -1104,9 +1101,8 @@ inline bool Value::Object::operator==(const Instance &other) const {
 inline Value::StringList Value::Object::keys() const {
   StringList keys;
 
-  for (std::map<std::string, Value>::const_iterator i = _value.begin();
-       i != _value.end(); ++i) {
-    keys.push_back(i->first);
+  for (auto i : _value) {
+    keys.push_back(i.first);
   }
   return keys;
 }
