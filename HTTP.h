@@ -182,8 +182,9 @@ inline Headers &Headers::operator=(const Headers &other) {
 inline Headers::operator String() const {
   String results("");
 
-  // cppcheck-suppress missingOverride
   for (auto i : _headers) {
+    // Consider using std::accumulate algorithm instead of a raw loop
+    // cppcheck-suppress useStlAlgorithm
     results += i.first + ": " + i.second + "\r\n";
   }
   return results + "\r\n";

@@ -1102,6 +1102,8 @@ inline Value::StringList Value::Object::keys() const {
   StringList keys;
 
   for (auto i : _value) {
+    // Consider using std::transform algorithm instead of a raw loop
+    // cppcheck-suppress useStlAlgorithm
     keys.push_back(i.first);
   }
   return keys;
