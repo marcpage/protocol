@@ -215,15 +215,22 @@ inline Headers::String::size_type Headers::_init(const String &text) {
 
   do {
     line.nextLine(text);
+
+    if (line.end <= line.start) {
+      break;
+    }
+
     if (::isspace(text[line.start])) {
       prefix = " ";
     } else {
       line.consumeKey(text).trimmed(text).value(text, lastKey);
       prefix.clear();
     }
+
     if (!line.trimmed(text).empty() && (lastKey.length() > 0)) {
       _headers[lastKey] += prefix + line.trimmed(text).value(text, value);
     }
+
   } while (!line.trimmed(text).empty() && (lastKey.length() > 0));
   return line.end;
 }
@@ -244,12 +251,18 @@ inline Headers::_Range Headers::_Range::consumeKey(const String &text) {
   String::size_type colonPos = text.find(':', start);
   String::size_type keyStart = start;
 
+  if (String::npos == colonPos) {
+    return *this; // not tested
+  }
   start = colonPos + 1;
   return _Range(keyStart, colonPos);
 }
 inline Headers::_Range Headers::_Range::trimmed(const String &text) const {
   _Range range(start, end);
 
+  if (end <= start) {
+    return range; // not tested
+  }
   while ((range.start < range.end) && ::isspace(text[range.start])) {
     ++range.start;
   }
@@ -490,8 +503,8 @@ inline RequestLine::String::size_type RequestLine::_init(const String &line) {
     lineEnd = line.find('\n');
   }
   after =
-      lineEnd + (((line[lineEnd] == '\r') && (lineEnd + 1 < line.length()) &&
-                  (line[lineEnd + 1] == '\n'))
+      lineEnd + (((String::npos != lineEnd) && (line[lineEnd] == '\r') &&
+                  (lineEnd + 1 < line.length()) && (line[lineEnd + 1] == '\n'))
                      ? 1
                      : 0);
   if (String::npos == lineEnd) {

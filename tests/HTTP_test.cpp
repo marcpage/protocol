@@ -78,12 +78,12 @@ void testHeaders(bool print) {
       "Accept-Encoding: gzip,deflate\r"
       "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\r"
       "Keep-Alive: 300";
+  http::Headers h6(header6);
   http::Headers h1(header1);
   http::Headers h2(header2);
   http::Headers h3(header3);
   http::Headers h4(h1);
   http::Headers h5;
-  http::Headers h6(header6);
   std::string headers =
       std::string(header1) + "\n" + header2 + "\n" + header3 + "\n\n" + header6;
   http::Headers::String::size_type offset = 0;
