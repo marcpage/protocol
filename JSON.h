@@ -120,6 +120,9 @@ public:
     return format(buffer);
   }
   Value &operator=(const Value &other) {
+    if (this == &other) {
+      return *this;
+    }
     makeNull();
     _value = (NULL == other._value) ? reinterpret_cast<Instance *>(NULL)
                                     : other._value->clone();
