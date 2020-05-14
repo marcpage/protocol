@@ -139,6 +139,7 @@ public:
   Value &operator[](const std::string &key);
   const Value &operator[](const std::string &key) const;
   bool operator==(const Value &other) const;
+  bool operator!=(const Value &other) const { return !(*this == other); }
 
 private:
   class Instance {
