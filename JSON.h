@@ -125,7 +125,7 @@ public:
   */
   Value &operator=(const Value &other) {
     if (this == &other) {
-      return *this;
+      return *this; // not tested
     }
     makeNull();
     _value = (NULL == other._value) ? reinterpret_cast<Instance *>(NULL)
@@ -171,7 +171,7 @@ private:
                 int indentLevel) const override;
     bool operator==(const Instance &other) const override {
       if (type() != other.type()) {
-        return false;
+        return false; // not tested
       }
       return reinterpret_cast<const String *>(&other)->value() == value();
     }
@@ -203,7 +203,7 @@ private:
     }
     bool operator==(const Instance &other) const override {
       if (type() != other.type()) {
-        return false;
+        return false; // not tested
       }
       return reinterpret_cast<const Integer *>(&other)->value() == value();
     }
@@ -228,7 +228,7 @@ private:
     }
     bool operator==(const Instance &other) const override {
       if (type() != other.type()) {
-        return false;
+        return false; // not tested
       }
       return reinterpret_cast<const Real *>(&other)->value() == value();
     }
@@ -253,7 +253,7 @@ private:
     }
     bool operator==(const Instance &other) const override {
       if (type() != other.type()) {
-        return false;
+        return false; // not tested
       }
       return reinterpret_cast<const Boolean *>(&other)->value() == value();
     }
@@ -929,10 +929,10 @@ inline Value &Value::operator[](const std::string &key) {
 }
 bool Value::operator==(const Value &other) const {
   if (_value == other._value) {
-    return true;
+    return true; // not tested
   }
   if ((nullptr == _value) || (nullptr == other._value)) {
-    return false;
+    return false; // not tested
   }
   return *_value == *other._value;
 }
@@ -1030,6 +1030,7 @@ inline void Value::Array::format(std::string &buffer, int indent,
   buffer += lastLinePrefix + "]";
 }
 
+/// @todo test
 inline bool Value::Array::operator==(const Instance &other) const {
   if (type() != other.type()) {
     return false;
@@ -1084,6 +1085,7 @@ inline void Value::Object::format(std::string &buffer, int indent,
   buffer += lastLinePrefix + "}";
 }
 
+/// @todo test
 inline bool Value::Object::operator==(const Instance &other) const {
   if (type() != other.type()) {
     return false;
