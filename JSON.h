@@ -115,10 +115,14 @@ public:
   std::string &format(std::string &buffer, int indent = -1,
                       int indentLevel = 0) const;
   std::string format(int indent = -1, int indentLevel = 0) const;
+  /* prevent common coding errors.
+  call formet() to get json text and string() to get string contents.
+
   operator std::string() const {
     std::string buffer;
     return format(buffer);
   }
+  */
   Value &operator=(const Value &other) {
     if (this == &other) {
       return *this;

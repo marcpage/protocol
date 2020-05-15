@@ -39,8 +39,8 @@ int main(int /*argc*/, char * /*argv*/[]) {
                        "\"\\f\"},true,false,null,\"C:\\\\\"]}";
 
       printf("-=- original -=-\n'%s'\n-=- parsed -=-\n'%s'\n", j1,
-             std::string(json::Value().parse(j1)).c_str());
-      dotest(std::string(json::Value().parse(j1)) == j1);
+             json::Value().parse(j1).format().c_str());
+      dotest(json::Value().parse(j1).format() == j1);
       dotest(json::Value().parse(j1).is(json::ObjectType));
       dotest(json::Value().parse(j1)["test \"me\""][9].count() == 3);
       dotest(json::Value().parse(j1)["test \"me\""].is(json::ArrayType));
@@ -164,7 +164,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
       } catch (const json::WrongType &) {
       }
       try {
-        std::string(json::Value().parse("\"\xF8\""));
+        json::Value().parse("\"\xF8\"").format();
         dotest(false);
       } catch (const std::invalid_argument &) {
       }
@@ -176,42 +176,42 @@ int main(int /*argc*/, char * /*argv*/[]) {
       }
       printf("--------------------------------\n");
       try {
-        std::string(json::Value().parse("\"\xc0\x80\""));
+        json::Value().parse("\"\xc0\x80\"").format();
         dotest(false);
       } catch (const msg::Exception &) {
       }
       try {
-        std::string(json::Value().parse("\"\xc0\x00\""));
+        json::Value().parse("\"\xc0\x00\"").format();
         dotest(false);
       } catch (const msg::Exception &) {
       }
       try {
-        std::string(json::Value().parse("\"\xe0\x80\x80\""));
+        json::Value().parse("\"\xe0\x80\x80\"").format();
         dotest(false);
       } catch (const msg::Exception &) {
       }
       try {
-        std::string(json::Value().parse("\"\xe0\x00\x80\""));
+        json::Value().parse("\"\xe0\x00\x80\"").format();
         dotest(false);
       } catch (const msg::Exception &) {
       }
       try {
-        std::string(json::Value().parse("\"\xe0\x80\x00\""));
+        json::Value().parse("\"\xe0\x80\x00\"").format();
         dotest(false);
       } catch (const msg::Exception &) {
       }
       try {
-        std::string(json::Value().parse("\"\xf0\x00\x80\x80\""));
+        json::Value().parse("\"\xf0\x00\x80\x80\"").format();
         dotest(false);
       } catch (const msg::Exception &) {
       }
       try {
-        std::string(json::Value().parse("\"\xf0\x80\x00\x80\""));
+        json::Value().parse("\"\xf0\x80\x00\x80\"").format();
         dotest(false);
       } catch (const msg::Exception &) {
       }
       try {
-        std::string(json::Value().parse("\"\xf0\x80\x80\x00\""));
+        json::Value().parse("\"\xf0\x80\x80\x00\"").format();
         dotest(false);
       } catch (const msg::Exception &) {
       }
@@ -226,13 +226,11 @@ int main(int /*argc*/, char * /*argv*/[]) {
              "\xe2\x88\x91");
       dotest(json::Value().parse("\"\xf0\x9f\x98\x85\"").string() ==
              "\xf0\x9f\x98\x85");
-      printf("%s\n", std::string(json::Value().parse("\"\xc2\xae\"")).c_str());
-      printf("%s\n",
-             std::string(json::Value().parse("\"\xe2\x88\x91\"")).c_str());
-      dotest(std::string(json::Value().parse("\"\xc2\xae\"")) == "\"\\u00ae\"");
-      dotest(std::string(json::Value().parse("\"\xe2\x88\x91\"")) ==
-             "\"\\u2211\"");
-      dotest(std::string(json::Value().parse("\"\xf0\x9f\x98\x85\"")) ==
+      printf("%s\n", json::Value().parse("\"\xc2\xae\"").format().c_str());
+      printf("%s\n", json::Value().parse("\"\xe2\x88\x91\"").format().c_str());
+      dotest(json::Value().parse("\"\xc2\xae\"").format() == "\"\\u00ae\"");
+      dotest(json::Value().parse("\"\xe2\x88\x91\"").format() == "\"\\u2211\"");
+      dotest(json::Value().parse("\"\xf0\x9f\x98\x85\"").format() ==
              "\"\xf0\x9f\x98\x85\"");
 
       const char *j2 = " \t{\t \"real\"\t: 3.14159265, \"true\": true, "
@@ -240,7 +238,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
       json::Value json2(j2);
 
       printf("-=- original -=-\n'%s'\n-=- parsed -=-\n'%s'\n", j2,
-             std::string(json2).c_str());
+             json2.format().c_str());
       dotest(::fabs(json2["real"].real() - 3.14159265) < 0.0000001);
       dotest(json2["true"].boolean());
       testConstObject(json2, "true", json::Value() = true);
@@ -382,7 +380,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
         dotest(false);
       } catch (const json::WrongType &) {
       }
-      dotest(std::string(json::Value("\"\\b\"")) == "\"\\b\"");
+      dotest(json::Value("\"\\b\"").format() == "\"\\b\"");
 
       json::Value json3("[1,2,3]");
 
@@ -424,15 +422,15 @@ int main(int /*argc*/, char * /*argv*/[]) {
       testConstObject(test2, "number", json::Value() = 1);
       test2["boolean"] = true;
       test2["null"];
-      test3.makeObject()["inner"] = std::string(test2);
+      test3.makeObject()["inner"] = test2.format();
       test3["name"] = "inner \"one\"";
-      test4.makeObject()["twice"] = std::string(test3);
-      printf("'%s'\n", std::string(test4).c_str());
-      dotest(std::string(json::Value().parse(test4)) == std::string(test4));
+      test4.makeObject()["twice"] = test3.format();
+      printf("'%s'\n", test4.format().c_str());
+      dotest(json::Value().parse(test4.format()).format() == test4.format());
       test5.parse(test4["twice"].string());
-      dotest(std::string(test5) == std::string(test3));
-      dotest(std::string(json::Value().parse(test5["inner"].string())) ==
-             std::string(test2))
+      dotest(test5.format() == test3.format());
+      dotest(json::Value().parse(test5["inner"].string()).format() ==
+             test2.format())
 
           printf("test2: %s\n", test2.format(4).c_str());
       printf("test3: %s\n", test3.format(4).c_str());
@@ -455,9 +453,9 @@ int main(int /*argc*/, char * /*argv*/[]) {
       const std::string j4 = json::Value().parse(j3)["licenseData"].string();
 
       printf("-=- original -=-\n'%s'\n-=- parsed -=-\n'%s'\n", j3,
-             std::string(json::Value().parse(j3)).c_str());
+             json::Value().parse(j3).format().c_str());
       printf("-=- original -=-\n'%s'\n-=- parsed -=-\n'%s'\n", j4.c_str(),
-             std::string(json::Value().parse(j4)).c_str());
+             json::Value().parse(j4).format().c_str());
 
       json::Value o1(json::ObjectType);
 
