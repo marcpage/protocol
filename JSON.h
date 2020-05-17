@@ -138,6 +138,18 @@ public:
   Value &operator=(const std::string &value);
   Value &operator=(const char *value);
   Value &operator=(bool value);
+  Value &operator+=(int64_t value) {
+  	return *this = (integer() + value);
+  }
+  Value &operator+=(int value) {
+  	return *this = (integer() + int64_t(value));
+  }
+  Value &operator-=(int64_t value) {
+  	return *this = (integer() - value);
+  }
+  Value &operator-=(int value) {
+  	return *this = (integer() - int64_t(value));
+  }
   Value &operator[](int index);
   const Value &operator[](int index) const;
   Value &operator[](const std::string &key);
