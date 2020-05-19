@@ -1036,7 +1036,7 @@ inline void Value::Array::format(std::string &buffer, int indent,
 
 inline bool Value::Array::operator==(const Instance &other) const {
   if (type() != other.type()) {
-    return false; // not tested
+    return false; // tested in libernet tests
   }
 
   const Array *array = reinterpret_cast<const Array *>(&other);
@@ -1095,16 +1095,16 @@ inline bool Value::Object::operator==(const Instance &other) const {
   const Object *object = reinterpret_cast<const Object *>(&other);
 
   if (_value.size() != object->_value.size()) {
-    return false; // not tested
+    return false; // tested in libernet tests
   }
 
   for (auto i : _value) {
     if (!object->has(i.first)) {
-      return false; // not tested
+      return false; // tested in libernet tests
     }
 
     if (!(get(i.first) == object->get(i.first))) {
-      return false; // not tested
+      return false; // tested in libernet tests
     }
   }
   return true;
