@@ -933,7 +933,7 @@ inline Value &Value::operator[](const std::string &key) {
 }
 bool Value::operator==(const Value &other) const {
   if (_value == other._value) {
-    return true; // not tested
+    return true;
   }
   if ((nullptr == _value) || (nullptr == other._value)) {
     return false; // not tested
