@@ -1034,22 +1034,21 @@ inline void Value::Array::format(std::string &buffer, int indent,
   buffer += lastLinePrefix + "]";
 }
 
-/// @todo test
 inline bool Value::Array::operator==(const Instance &other) const {
   if (type() != other.type()) {
-    return false;
+    return false; // not tested
   }
 
   const Array *array = reinterpret_cast<const Array *>(&other);
 
   if (_value.size() != array->_value.size()) {
-    return false;
+    return false; // not tested
   }
 
   for (auto i = _value.begin(), j = array->_value.begin(); i != _value.end();
        ++i, ++j) {
     if (!(*i == *j)) {
-      return false;
+      return false; // not tested
     }
   }
   return true;
@@ -1089,24 +1088,23 @@ inline void Value::Object::format(std::string &buffer, int indent,
   buffer += lastLinePrefix + "}";
 }
 
-/// @todo test
 inline bool Value::Object::operator==(const Instance &other) const {
   if (type() != other.type()) {
-    return false;
+    return false; // not tested
   }
   const Object *object = reinterpret_cast<const Object *>(&other);
 
   if (_value.size() != object->_value.size()) {
-    return false;
+    return false; // not tested
   }
 
   for (auto i : _value) {
     if (!object->has(i.first)) {
-      return false;
+      return false; // not tested
     }
 
     if (!(get(i.first) == object->get(i.first))) {
-      return false;
+      return false; // not tested
     }
   }
   return true;
@@ -1126,7 +1124,8 @@ inline const Value &Value::Object::get(const std::string &key) const {
   std::map<std::string, Value>::const_iterator found = _value.find(key);
 
   if (found == _value.end()) {
-    throw WrongType(std::string("Key not found: ") + key, __FILE__, __LINE__);
+    throw WrongType(std::string("Key not found: ") + key, // not tested
+                    __FILE__, __LINE__);
   }
   return found->second;
 }

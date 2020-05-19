@@ -427,12 +427,14 @@ int main(int /*argc*/, char * /*argv*/[]) {
       test4.makeObject()["twice"] = test3.format();
       printf("'%s'\n", test4.format().c_str());
       dotest(json::Value().parse(test4.format()).format() == test4.format());
+      dotest(json::Value().parse(test4.format()) == test4);
       test5.parse(test4["twice"].string());
       dotest(test5.format() == test3.format());
       dotest(json::Value().parse(test5["inner"].string()).format() ==
              test2.format())
+          dotest(json::Value().parse(test5["inner"].string()) == test2)
 
-          printf("test2: %s\n", test2.format(4).c_str());
+              printf("test2: %s\n", test2.format(4).c_str());
       printf("test3: %s\n", test3.format(4).c_str());
       printf("test4: %s\n", test4.format(4).c_str());
       printf("test5: %s\n", test5.format(4).c_str());
