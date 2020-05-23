@@ -449,7 +449,9 @@ inline RequestLine::RequestLine(const String &line, String::size_type &after)
     : _method(), _path(), _protocol(), _version("1.1"), _query() {
   after = _init(line);
 }
-inline RequestLine::RequestLine(const RequestLine &other) { *this = other; }
+inline RequestLine::RequestLine(const RequestLine &other)
+    : _method(other._method), _path(other._path), _protocol(other._protocol),
+      _version(other._version), _query(other._query) {}
 inline RequestLine &RequestLine::operator=(const RequestLine &other) {
   _method = other._method;
   _path = other._path;
@@ -481,8 +483,8 @@ inline Query &RequestLine::query() { return _query; }
 inline RequestLine::String::size_type
 RequestLine::_find(bool whitespace, const String &text, String::size_type start,
                    String::size_type end) {
-  while (((::isspace(text[start]) ? true : false) != whitespace) &&
-         (start < end)) {
+  while ((start < end) &&
+         ((::isspace(text[start]) ? true : false) != whitespace)) {
     ++start;
   }
   return start;
@@ -539,7 +541,10 @@ inline ResponseLine::ResponseLine()
 inline ResponseLine::ResponseLine(const ResponseLine &other)
     : _protocol(other._protocol), _version(other._version), _code(other._code),
       _message(other._message) {}
-inline ResponseLine::ResponseLine(const String &line) { _init(line); }
+inline ResponseLine::ResponseLine(const String &line)
+    : _protocol(), _version(), _code(), _message() {
+  _init(line);
+}
 inline ResponseLine::ResponseLine(const String &line,
                                   String::size_type &after) {
   after = _init(line);
@@ -571,8 +576,8 @@ inline ResponseLine::String &ResponseLine::message() { return _message; }
 inline ResponseLine::String::size_type
 ResponseLine::_find(bool whitespace, const String &text,
                     String::size_type start, String::size_type end) {
-  while (((::isspace(text[start]) ? true : false) != whitespace) &&
-         (start < end)) {
+  while ((start < end) &&
+         ((::isspace(text[start]) ? true : false) != whitespace)) {
     ++start;
   }
   return start;
