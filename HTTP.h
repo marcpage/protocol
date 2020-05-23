@@ -545,8 +545,8 @@ inline ResponseLine::ResponseLine(const String &line)
     : _protocol(), _version(), _code(), _message() {
   _init(line);
 }
-inline ResponseLine::ResponseLine(const String &line,
-                                  String::size_type &after) {
+inline ResponseLine::ResponseLine(const String &line, String::size_type &after)
+    : _protocol(), _version(), _code(), _message() {
   after = _init(line);
 }
 inline ResponseLine &ResponseLine::operator=(const ResponseLine &other) {
