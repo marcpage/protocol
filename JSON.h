@@ -10,6 +10,7 @@
 #include <map>
 #include <sstream>
 #include <stdexcept>
+#include <string.h> // strlen
 #include <string>
 #include <vector>
 
