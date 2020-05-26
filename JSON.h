@@ -55,9 +55,9 @@ public:
       TypeCase(RealType);
       TypeCase(BooleanType);
     default:
-      break; // Never hit in code coverage
+      break; // not tested
     }
-    return "Corrupt"; // Never hit in code coverage
+    return "Corrupt"; // not tested
   }
   explicit WrongType(const std::string &message, const char *file = NULL,
                      int line = 0) throw()
@@ -499,7 +499,7 @@ inline void Value::_parseString(const std::string &text,
       offset += 1;
       break;
     case '"':
-      break; // Don't know why we never hit this in code coverage
+      break;
     default:
       result += text[offset];
       offset += 1;

@@ -193,7 +193,7 @@ inline const Headers::String &Headers::operator[](const String &name) const {
   _Headers::const_iterator found = _headers.find(name);
 
   if (found == _headers.end()) {
-    throw std::out_of_range(name); // no code coverage
+    throw std::out_of_range(name); // not tested
   }
   return found->second;
 }
@@ -344,7 +344,7 @@ inline Query::Query(const String &query, SearchMode mode) : _keyValues() {
       String::size_type equalsPos = query.find('=', position);
       String::size_type keyEndPos =
           equalsPos == positionEnd
-              ? positionEnd // no code coverage
+              ? positionEnd // not tested
               : (equalsPos > positionEnd ? positionEnd : equalsPos);
       String key = unescape(query.substr(position, keyEndPos - position));
       String value = keyEndPos < positionEnd
@@ -407,8 +407,8 @@ inline Query::operator String() const {
       }
     } else { // shouldn't happen. Any time a key is added, at least an empty
              // value should be put in the list
-      result += prefix + escape(key.first); // no code coverage
-      prefix = "&";                         // no code coverage
+      result += prefix + escape(key.first); // not tested
+      prefix = "&";                         // not tested
     }
   }
   return result;
@@ -426,7 +426,7 @@ inline const Query::String &Query::getOne(const String &name) const {
 
   if (0 == found.size()) { // should never happen. Any time a key is added, at
                            // least an empty value should be put in the list
-    throw std::out_of_range(name); // no code coverage
+    throw std::out_of_range(name); // not tested
   }
   return found[0];
 }
@@ -623,8 +623,7 @@ inline ResponseLine::String::size_type ResponseLine::_init(const String &line) {
 /* Message */
 
 template <typename HeaderLine>
-inline Message<HeaderLine>::Message()
-    : _message(), _headers() {} // no code coverage
+inline Message<HeaderLine>::Message() : _message(), _headers() {} // not tested
 template <typename HeaderLine>
 inline Message<HeaderLine>::Message(const String &headers)
     : _message(), _headers() {
