@@ -1,5 +1,1 @@
-# protocol
-C++ headers to support various protocols
-
-# testing
-Just run 'make'
+Contents moved to libernet repo. All future revisions will happen there.
