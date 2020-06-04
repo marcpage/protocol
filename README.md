@@ -1,1 +1,1 @@
-Contents moved to libernet repo. All future revisions will happen there.
+This repo is no longer maintained. Code has been moved to [libernet](https://github.com/marcpage/libernet)
